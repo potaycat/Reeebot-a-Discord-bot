@@ -76,7 +76,7 @@ class LorePlayerManager():
                 snwflk = file.split('.', 1)[0]
                 if snwflk not in (dt := self.data):
                     dt[snwflk] = 0
-                self.players[snwflk] = DialogPlayer(snwflk, dt[snwflk])
+                self.players[snwflk] = LorePlayer(snwflk, dt[snwflk])
 
     async def replyIfMatch(self, msg):
         # await msg.channel.send(self.players)

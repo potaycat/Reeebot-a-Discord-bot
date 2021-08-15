@@ -7,6 +7,7 @@ from discord import Intents
 from modules.easter_egg.ee_lore_player import LorePlayerManager
 from modules.easter_egg.eeEV_recognize import eeAware
 
+
 TOKEN = os.getenv('DISCORD_TOKEN')
 PREFIX = os.getenv('PREFIX')
 
@@ -55,10 +56,13 @@ async def on_command_error(ctx, error):
 
 
 @bot.command(name='ping')
-async def cal_ping(ctx):
+async def cal_ping(ctx, attr=""):
     """Some bot info"""
-    print(bot.__dir__())
-    await ctx.send(f'Ping: {bot.latency}; attr: bot.__dir__()')
+    if attr == "":
+        await ctx.send(f'Ping: {bot.latency}. View internal attributes using ping <attribute name>')
+    else:
+        print(bot.__dir__())
+        await ctx.send(f'`{attr}: {getattr(bot, attr, "not an attribute")}`')
 
 
 if __name__ == "__main__":
