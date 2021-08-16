@@ -4,15 +4,15 @@ import requests
 
 
 class ImageOpener():
-    DEFAULT_SIZE_X = 512
-    DEFAULT_SIZE_Y = 512
+    SIZE_X = 512
+    SIZE_Y = 512
     _image: cv2
 
     def get_img(self):
         return self._image
 
     def open(self, file_path):
-        self._image = cv2.imread(file_path)
+        self._image = cv2.imread(file_path, flags=cv2.IMREAD_UNCHANGED)
         self._normalize_size()
 
     def open_from_url(self, url):
@@ -24,7 +24,7 @@ class ImageOpener():
         self._normalize_size()
 
     def _normalize_size(self):
-        dim = (self.DEFAULT_SIZE_X, self.DEFAULT_SIZE_Y)
+        dim = (self.SIZE_X, self.SIZE_Y)
         self._image = cv2.resize(
             self._image, dim, interpolation=cv2.INTER_AREA)
 

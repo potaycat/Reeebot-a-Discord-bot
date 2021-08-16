@@ -15,8 +15,8 @@ class ClassPredictor(ImageOpener):
     initialized = False
 
     def __init__(self):
-        ClassPredictor.DEFAULT_SIZE_X = INPUT_SIZE
-        ClassPredictor.DEFAULT_SIZE_Y = INPUT_SIZE
+        ClassPredictor.SIZE_X = INPUT_SIZE
+        ClassPredictor.SIZE_Y = INPUT_SIZE
         ClassPredictor._model = keras.models.load_model(os.path.join(PATH, KERAS_MODEL))
         ClassPredictor.labels = [
             "Eevee",
