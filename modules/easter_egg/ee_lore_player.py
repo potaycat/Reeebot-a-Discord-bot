@@ -66,9 +66,14 @@ class LorePlayerManager():
 
     players = {}
     data = {}
+    saved_path = FILE_PATH+'data.json'
 
     def __init__(self):
-        with open(FILE_PATH+'data.json', 'r+') as json_file:
+        if not os.path.isfile(self.saved_path):
+            os.makedirs(FILE_PATH+"active/")
+            with open(self.saved_path, 'w') as f:
+                f.write("{}")
+        with open(self.saved_path, 'r') as json_file:
             self.data = json.load(json_file)
 
         for file in os.listdir(FILE_PATH+"active/"):
@@ -91,5 +96,5 @@ class LorePlayerManager():
 
             if self.data[snwflk] != (l := playr.get_cur_line()):
                 self.data[snwflk] = l
-                with open(FILE_PATH+'data.json', 'w') as outfile:
+                with open(self.saved_path, 'w') as outfile:
                     json.dump(self.data, outfile)

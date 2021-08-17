@@ -5,7 +5,7 @@ from ..text_generation.backend import GPT2Wrapper
 class eeAware():
     
     def recognize(self, url):
-        if ClassPredictor.initialized:
+        if not ClassPredictor.initialized:
             return ""
         ClassPredictor.open_from_url(url)
         pd = ClassPredictor.predict()
