@@ -1,24 +1,24 @@
-import os
 import cv2
 import numpy as np
-# import matplotlib.pyplot as plt
 from utils import ImageOpener
 
 
-PATH = "modules/image_awareness/"
-KERAS_MODEL = "EV-classify-1605309902.keras"
-INPUT_SIZE = 299
+class ImageStore(ImageOpener):
+
+    def __init__(self):
+        self.SIZE_X = self.SIZE_Y = ClassPredictor.INPUT_SIZE
 
 
-class ClassPredictor(ImageOpener):
+class ClassPredictor():
     initialized = False
 
     def __init__(self):
-        from tensorflow import keras
-        
-        ClassPredictor.SIZE_X = INPUT_SIZE
-        ClassPredictor.SIZE_Y = INPUT_SIZE
-        ClassPredictor._model = keras.models.load_model(os.path.join(PATH, KERAS_MODEL))
+        if ClassPredictor.initialized:
+            return
+        import tflite_runtime.interpreter as tflite
+        ClassPredictor.INPUT_SIZE = 299
+        ClassPredictor._model = tflite.Interpreter(model_path='modules/image_awareness/EV-classify-1605309902.tflite')
+        ClassPredictor._model.allocate_tensors()
         ClassPredictor.labels = [
             "Eevee",
             "Espeon",
@@ -32,18 +32,25 @@ class ClassPredictor(ImageOpener):
         ]
         ClassPredictor.initialized = True
 
-    def predict(self):
-        self._image = cv2.cvtColor(self._image, cv2.COLOR_BGR2RGB) # BRUH
-        # imgplot = plt.imshow(self.get_img())
-        # plt.show()
-        input_ = np.asarray([self.get_img()])
-        pd = ClassPredictor._model.predict(input_)[0]
-        return pd
+    @staticmethod
+    def predict(img):
+        # cv2.imshow('img', img)
+        # cv2.waitKey(0)
 
-    def most_likely(self, pd, threshold = 0.6):
-        dom = np.argmax(pd)
-        if pd[dom] < threshold:
+        input_ = np.asarray([img]).astype(np.float32)
+        x = ClassPredictor._model
+        x.set_tensor(0, input_)
+        x.invoke()
+        output_data = x.get_tensor(182)[0]
+        return output_data
+
+    @staticmethod
+    def most_likely(img, threshold=0.6, lower_threshold=0.7):
+        pd = ClassPredictor.predict(img).tolist()
+        high_label_ind = np.argmax(pd)
+        label_percentg = pd.pop(high_label_ind)
+        if label_percentg < threshold and max(pd)>lower_threshold:
             return "I don't know"
-        predicted = ClassPredictor.labels[dom]
+        predicted = ClassPredictor.labels[high_label_ind]
         return predicted
         

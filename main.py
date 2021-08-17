@@ -19,7 +19,7 @@ startup_extensions = [
     "modules.web_scraper.scraper",
     "modules.image_manip.manip",
     "modules.discord_scraper.scraper",
-    # "modules.image_awareness.aware",
+    "modules.image_awareness.aware",
     # "modules.text_generation.text_gen",
 ]
 

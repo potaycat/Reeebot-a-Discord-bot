@@ -6,3 +6,4 @@ modules/easter_egg/ee_lores/*
 modules/image_manip/comvis/*
 !modules/image_manip/comvis/emoji
 modules/text_generation/model/*
+Laboratory/

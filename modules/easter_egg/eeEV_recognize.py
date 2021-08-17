@@ -1,18 +1,18 @@
-from ..image_awareness.backend import ClassPredictor
+from ..image_awareness.backend import ImageStore, ClassPredictor
 from ..text_generation.backend import GPT2Wrapper
 
 
 class eeAware():
     
     def recognize(self, url):
+        img = ImageStore()
         if not ClassPredictor.initialized:
             return ""
-        ClassPredictor.open_from_url(url)
-        pd = ClassPredictor.predict()
+        img.open_from_url(url)
+        predicted = ClassPredictor.most_likely(img.get_img(), threshold=0.8, lower_threshold=0.7)
         # print(url)
         # print(pd)
-        if (predicted:=ClassPredictor.most_likely(pd, threshold = 0.8))\
-            [0] == "I":
+        if predicted[0] == "I":
             return ""
 
         if not GPT2Wrapper.initialized:
