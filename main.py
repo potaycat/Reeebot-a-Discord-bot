@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 from discord.ext import commands
-from discord_slash import SlashCommand
 from discord import Intents
 from modules.easter_egg.ee_lore_player import LorePlayerManager
 from modules.easter_egg.eeEV_recognize import eeAware
@@ -14,14 +13,13 @@ PREFIX = os.getenv('PREFIX')
 intents = Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix=PREFIX, intents=intents, case_insensitive=True)
-slash = SlashCommand(bot, sync_commands=True)
 startup_extensions = [
     "modules.echo",
     "modules.rng",
     "modules.web_scraper.scraper",
     "modules.image_manip.manip",
     "modules.discord_scraper.scraper",
-    "modules.image_awareness.aware",
+    # "modules.image_awareness.aware",
     # "modules.text_generation.text_gen",
 ]
 

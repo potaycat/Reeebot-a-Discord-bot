@@ -1,7 +1,6 @@
 import os
 import cv2
 import numpy as np
-from tensorflow import keras
 # import matplotlib.pyplot as plt
 from utils import ImageOpener
 
@@ -15,6 +14,8 @@ class ClassPredictor(ImageOpener):
     initialized = False
 
     def __init__(self):
+        from tensorflow import keras
+        
         ClassPredictor.SIZE_X = INPUT_SIZE
         ClassPredictor.SIZE_Y = INPUT_SIZE
         ClassPredictor._model = keras.models.load_model(os.path.join(PATH, KERAS_MODEL))

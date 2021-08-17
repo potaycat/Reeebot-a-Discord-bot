@@ -1,4 +1,3 @@
-from transformers import pipeline, set_seed
 from random import randint 
 
 
@@ -6,6 +5,8 @@ class GPT2Wrapper:
     initialized = False
     
     def __init__(self):
+        from transformers import pipeline, set_seed
+
         seed = randint(0, 9999)
         set_seed(seed)
         print(seed)

@@ -1,28 +1,28 @@
 import asyncio
 from random import random, choice
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import pipeline
-import torch
-
 
 MODEL_PATH = "modules/text_generation/model/dialoGPT-medium-plain/"
 
 class Talking:
 
-    starter = pipeline(
-        "text-generation",
-        model="modules/text_generation/model/gpt2-wattpad-romance",
-        tokenizer="gpt2",
-    )
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-    model = AutoModelForCausalLM.from_pretrained(MODEL_PATH)
-
     def __init__(self, ctx, instant_mode=False):
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from transformers import pipeline
+        import torch
+
         self.ctx = ctx
         self.running = True
         self.is_instant = instant_mode
         self.pingable = ["you", "them"]
+
+        Talking.starter = pipeline(
+            "text-generation",
+            model="modules/text_generation/model/_",
+            tokenizer="gpt2",
+        )
+        Talking.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+        Talking.model = AutoModelForCausalLM.from_pretrained(MODEL_PATH)
 
     async def run(self):
         tok = Talking.tokenizer
