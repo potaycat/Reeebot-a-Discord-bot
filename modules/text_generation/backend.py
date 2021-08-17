@@ -10,21 +10,22 @@ class GPT2Wrapper:
         set_seed(seed)
         print(seed)
 
-        GPT2Wrapper._pipeline = pipeline(
+        GPT2Wrapper.distilgdex = pipeline(
             "text-generation",
-            model="modules/text_generation/model/bwurtz-gpt2-med-2203-adam-b16/checkpoint-1536/",
+            model="modules/text_generation/model/distilgdex",
             tokenizer="distilgpt2",
         )
-        GPT2Wrapper._pipeline2 = pipeline(
+        GPT2Wrapper.crappost = pipeline(
             "text-generation",
             model="modules/text_generation/model/bwurtz-gpt2-med-2203-adam-b16/checkpoint-1536/",
             tokenizer="distilgpt2",
         )
         GPT2Wrapper.initialized = True
 
-
-    def gen(self, str_=""):
-        text = GPT2Wrapper._pipeline(str_, max_length=30)
+    @staticmethod
+    def gen(pipeline='distilgdex', prompt="", **kwargs):
+        gen_pipeline = getattr(foo, pipeline)
+        text = gen_pipeline(prompt, max_length=kwargs['max_length'])
         text = text[0]["generated_text"]
         text = text.strip()
         try:

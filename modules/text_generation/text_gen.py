@@ -3,9 +3,8 @@ from .backend import GPT2Wrapper
 from .chatbot import Talking
 
 
-class AITextGenerator(commands.Cog, name='Text Generator'):
+class AITextGenerator(commands.Cog, name='Text Synthesis'):
 
-    t_gen = GPT2Wrapper
     haunting = {}
 
     def __init__(self, bot):
@@ -17,14 +16,13 @@ class AITextGenerator(commands.Cog, name='Text Generator'):
             Generate with a model trained on pokedex entries
         """
         from_str = ctx.message.content.split(' ', 1)
-        print(from_str)
         if len(from_str) > 1:
             from_str = from_str[1]
         else:
             from_str = ""
-        print(from_str)
-        text = self.t_gen.gen(from_str)
+        text = GPT2Wrapper.gen('crappost', from_str)
         await ctx.send(text)
+
 
     @commands.group(invoke_without_command=True)
     async def talkhere(self, ctx):
@@ -44,9 +42,9 @@ class AITextGenerator(commands.Cog, name='Text Generator'):
         await self.haunting[cid].run()
 
     @talkhere.command()
-    async def fallfor(self, ctx, *mentions):
+    async def people(self, ctx, *mentions):
         if (cid:=ctx.channel.id) in self.haunting:
-            await ctx.send(f'Fallen for {mentions} 😍')
+            await ctx.send(f'Stories for {mentions}')
             self.haunting[cid].pingable = mentions
         else:
             await ctx.send(f'`talkhere` first')

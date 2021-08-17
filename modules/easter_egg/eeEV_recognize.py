@@ -15,7 +15,7 @@ class eeAware():
             [0] == "I":
             return ""
 
-        if GPT2Wrapper.initialized:
+        if not GPT2Wrapper.initialized:
             return (f'Oh hey you {predicted}!')
-        reply = GPT2Wrapper.gen(f'Oh hey you {predicted}! I heard that {predicted}')
+        reply = GPT2Wrapper.gen('distilgdex', f'Oh hey you {predicted}! I heard that {predicted}')
         return reply + '\n'
