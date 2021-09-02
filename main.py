@@ -27,7 +27,7 @@ startup_extensions = [
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
-    await bot.get_channel(758986102257876992).send('Online ' + PREFIX)
+    await bot.get_channel(int(os.getenv('LOGGING_CHANNEL'))).send('Online ' + PREFIX)
 
 
 ee = LorePlayerManager()
