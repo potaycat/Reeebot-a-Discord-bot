@@ -2,7 +2,7 @@ from discord.ext import commands
 from .backend import ImageStore, ClassPredictor
 
 
-class ImageAware(commands.Cog, name='Image Awareness'):
+class ImageAware(commands.Cog, name='4. Image Awareness'):
 
     def __init__(self, bot):
         self.bot = bot
@@ -10,7 +10,7 @@ class ImageAware(commands.Cog, name='Image Awareness'):
     @commands.group(invoke_without_command=True)
     async def whichEV(self, ctx):
         """
-            Tells which Eeveelution is in an image or avatar (works best when face not obscured)
+            Tries to tell which Eeveelution is in an image or avatar
             Open source link: https://colab.research.google.com/drive/15mm41wCpEHrbsCSV3NR4xfEmYn0qmntp
         """
         img = ImageStore()

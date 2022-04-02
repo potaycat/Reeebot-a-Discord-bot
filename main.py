@@ -1,10 +1,10 @@
+from modules.easter_egg.eeEV_recognize import eeAware
+from modules.easter_egg.ee_lore_player import LorePlayerManager
+from discord import Intents
+from discord.ext import commands
+import os
 from dotenv import load_dotenv
 load_dotenv()
-import os
-from discord.ext import commands
-from discord import Intents
-from modules.easter_egg.ee_lore_player import LorePlayerManager
-from modules.easter_egg.eeEV_recognize import eeAware
 
 
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -12,13 +12,13 @@ PREFIX = os.getenv('PREFIX')
 
 intents = Intents.default()
 intents.members = True
-bot = commands.Bot(command_prefix=PREFIX, intents=intents, case_insensitive=True)
+bot = commands.Bot(command_prefix=PREFIX,
+                   intents=intents, case_insensitive=True)
 startup_extensions = [
     "modules.echo",
-    "modules.rng",
+    "modules.rce",
     "modules.web_scraper.scraper",
     "modules.image_manip.manip",
-    "modules.discord_scraper.scraper",
     "modules.image_awareness.aware",
     # "modules.text_generation.text_gen",
 ]
@@ -27,7 +27,7 @@ startup_extensions = [
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
-    await bot.get_channel(int(os.getenv('LOGGING_CHANNEL'))).send('Online ' + PREFIX)
+    await bot.get_channel(int(os.getenv('LOGGING_CHANNEL_ID'))).send('Online ' + PREFIX)
 
 
 ee = LorePlayerManager()
@@ -40,7 +40,7 @@ async def on_message(msg):
         await ee.replyIfMatch(msg)
     elif c == "<@!758176006171000833>" or c == "<@758176006171000833>":
         await ee.replyIfMatch(msg)
-        if matchThenReply:=eeEV.recognize(msg.author.avatar_url):
+        if matchThenReply := eeEV.recognize(msg.author.avatar_url):
             async with msg.channel.typing():
                 await msg.channel.send(f"{matchThenReply}Type `{PREFIX}help` to see my commands")
         else:
@@ -54,13 +54,8 @@ async def on_command_error(ctx, error):
 
 
 @bot.command(name='ping')
-async def cal_ping(ctx, attr=""):
-    """Some bot info"""
-    if attr == "":
-        await ctx.send(f'Ping: {bot.latency}. View internal attributes using ping <attribute name>')
-    else:
-        print(bot.__dir__())
-        await ctx.send(f'`{attr}: {getattr(bot, attr, "not an attribute")}`')
+async def cal_ping(ctx):
+    await ctx.send(f'Pong! Latency: {bot.latency}')
 
 
 if __name__ == "__main__":

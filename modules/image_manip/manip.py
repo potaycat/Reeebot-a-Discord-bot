@@ -4,7 +4,7 @@ from .presets import ImageFilterer
 from .color_quantizer import ColorQuantizer
 
 
-class QuickImageEdit(commands.Cog, name='Image Manipulating'):
+class QuickImageEdit(commands.Cog, name='3. Image Manipulating'):
     """
         Perform image processing.
         Send along user mention, image link or image attachment.
@@ -38,8 +38,9 @@ class QuickImageEdit(commands.Cog, name='Image Manipulating'):
     @commands.group(invoke_without_command=True)
     async def palette(self, ctx, limit=None):
         """
-            Create a color palette from an image using color quantization methods.
-            Usage: `palette <number of colors> <image url or leave blank>`
+            Creates a color palette from an image.
+            Pick between 2 color quantize methods.
+            Usage: `palette <number of colors> <image url>`
         """
         img = ColorQuantizer()
         url = img.image_url_from_msg(ctx.message)
@@ -52,7 +53,7 @@ class QuickImageEdit(commands.Cog, name='Image Manipulating'):
     async def kmeans(self, ctx, n_clusters=8):
         """
             Use k-means
-            Usage: `kmeans <number of colors> <image url or leave blank>`
+            Usage: `palette kmeans <number of colors> <image url>`
         """
         img = ColorQuantizer()
         url = img.image_url_from_msg(ctx.message)

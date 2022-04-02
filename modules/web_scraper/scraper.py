@@ -3,7 +3,7 @@ from discord.ext import commands
 from .pixiv import PixivApiUtilizer
 
 
-class Scraper(commands.Cog, name='Web Scraping'):
+class Scraper(commands.Cog, name='2. Web Scraping'):
 
     @commands.command()
     async def pixiv(self, ctx, keywords):

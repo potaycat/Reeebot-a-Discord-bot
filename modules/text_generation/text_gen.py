@@ -41,31 +41,6 @@ class AITextGenerator(commands.Cog, name='Text Synthesis'):
             await ctx.send(f"I'll talk in this channel!")
         await self.haunting[cid].run()
 
-    @talkhere.command()
-    async def people(self, ctx, *mentions):
-        if (cid:=ctx.channel.id) in self.haunting:
-            await ctx.send(f'Stories for {mentions}')
-            self.haunting[cid].pingable = mentions
-        else:
-            await ctx.send(f'`talkhere` first')
-
-    @talkhere.command()
-    async def instant(self, ctx):
-        if (cid:=ctx.channel.id) in self.haunting:
-            self.haunting[ctx.channel.id].running = False
-        self.haunting[cid] = Talking(ctx, instant_mode=True)
-        await ctx.send(f"I'm happy to talk to you")
-        await self.haunting[cid].run()
-
-    @talkhere.command()
-    async def stoptalking(self, ctx):
-        if (cid:=ctx.channel.id) in self.haunting:
-            self.haunting[ctx.channel.id].running = False
-            del self.haunting[cid]
-            await ctx.send(f"I won't talk")
-        else:
-            await ctx.send(f"I'm not talking")
-
 
 
 def setup(bot):

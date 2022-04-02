@@ -2,7 +2,7 @@ from discord.ext import commands
 from .text_generation.backend import GPT2Wrapper
 
 
-class Echo(commands.Cog, name='Echoing'):
+class Echo(commands.Cog, name='1. Echoing'):
     """
         Let the bot do something with your text
     """
