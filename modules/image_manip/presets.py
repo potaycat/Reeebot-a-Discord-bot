@@ -27,7 +27,7 @@ class ImageFilterer(ImageOpener):
 
     def export_png(self):
         exprt_path = FILE_PATH+"export.png"
-        cv2.imwrite(exprt_path, self._image)
+        cv2.imwrite(exprt_path, self.image_)
         return exprt_path
 
     def _rotate_image(self, img, angle):
@@ -39,8 +39,8 @@ class ImageFilterer(ImageOpener):
 
     def _random_loc(self, margin_x, margin_y):
         pos = (
-            randint(0, self._image.shape[0] - margin_x - 1),
-            randint(0, self._image.shape[1] - margin_y - 1)
+            randint(0, self.image_.shape[0] - margin_x - 1),
+            randint(0, self.image_.shape[1] - margin_y - 1)
         )
         # print(pos)
         return pos
@@ -58,21 +58,21 @@ class ImageFilterer(ImageOpener):
         alpha_l = 1.0 - alpha_s
 
         for c in range(0, 3):
-            self._image[y1:y2, x1:x2, c] = (alpha_s * src[:, :, c] +
-                                            alpha_l * self._image[y1:y2, x1:x2, c])
+            self.image_[y1:y2, x1:x2, c] = (alpha_s * src[:, :, c] +
+                                            alpha_l * self.image_[y1:y2, x1:x2, c])
 
         # img[y_offset:y_offset+src.shape[0], x_offset:x_offset+src.shape[1]] = src
 
     def over_sharpen(self):
         kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-        img = cv2.filter2D(self._image, -1, kernel)
+        img = cv2.filter2D(self.image_, -1, kernel)
         img = cv2.addWeighted(img, 4, cv2.blur(img, (30, 30)), -4, 128)
-        self._image = img
+        self.image_ = img
 
     def turn_hot(self):
         # img = cv2.LUT(img, lut[, dst[, interpolation]])
-        hot_overlay = cv2.applyColorMap(self._image, cv2.COLORMAP_HOT)
-        self._image = cv2.addWeighted(self._image, 0.6, hot_overlay, 0.4, 0)
+        hot_overlay = cv2.applyColorMap(self.image_, cv2.COLORMAP_HOT)
+        self.image_ = cv2.addWeighted(self.image_, 0.6, hot_overlay, 0.4, 0)
 
     def motion_blur(self):  # not used
         size = 55
@@ -87,7 +87,7 @@ class ImageFilterer(ImageOpener):
 
     # https://stackoverflow.com/questions/7607464/implement-radial-blur-with-opencv
     def radial_blur(self):
-        img = self._image
+        img = self.image_
         w, h = img.shape[:2]
 
         center_x = w / 2
@@ -109,4 +109,4 @@ class ImageFilterer(ImageOpener):
             tmp2 = cv2.remap(img, shrinkMapx, shrinkMapy, cv2.INTER_LINEAR)
             img = cv2.addWeighted(tmp1, 0.5, tmp2, 0.5, 0)
 
-        self._image = img
+        self.image_ = img

@@ -8,7 +8,7 @@ class Echo(commands.Cog, name="1. Echoing"):
     """
 
     @commands.command()
-    async def say(self, ctx, to_repeat=""):
+    async def say(self, ctx, *, to_repeat=""):
         """
         Repeats something
         """
@@ -18,7 +18,7 @@ class Echo(commands.Cog, name="1. Echoing"):
             else:
                 await ctx.send("Hello")
         else:
-            await ctx.send(ctx.message.content.split("say ", 1)[1])
+            await ctx.send(to_repeat)
 
     @commands.command()
     async def eeveefy(self, ctx, word="Eevee"):

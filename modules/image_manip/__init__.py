@@ -17,8 +17,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         Lmao
         """
         img = ImageFilterer()
-        url = img.image_url_from_msg(ctx.message)
-        img.open_from_url(url)
+        await img.load_from_msg(ctx.message)
         img.deepfry()
         file_path = img.export_png()
         await ctx.send(file=File(file_path))
@@ -29,8 +28,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         UwU
         """
         img = ImageFilterer()
-        url = img.image_url_from_msg(ctx.message)
-        img.open_from_url(url)
+        await img.load_from_msg(ctx.message)
         img.wholesome()
         file_path = img.export_png()
         await ctx.send(file=File(file_path))
@@ -43,8 +41,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         Usage: `palette <number of colors> <image url>`
         """
         img = ColorQuantizer()
-        url = img.image_url_from_msg(ctx.message)
-        img.open_from_url(url)
+        await img.load_from_msg(ctx.message)
         img.nearest_color_quantize(limit=limit)
         file_path = img.export_png()
         await ctx.send(file=File(file_path))
@@ -56,8 +53,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         Usage: `palette kmeans <number of colors> <image url>`
         """
         img = ColorQuantizer()
-        url = img.image_url_from_msg(ctx.message)
-        img.open_from_url(url)
+        await img.load_from_msg(ctx.message)
         img.kmeans_quantize(n_clusters=n_clusters)
         file_path = img.export_png()
         await ctx.send(file=File(file_path))

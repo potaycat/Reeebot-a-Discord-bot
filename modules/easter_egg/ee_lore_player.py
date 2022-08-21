@@ -1,15 +1,15 @@
 import os
 import json
 import re
-from random import choice
 
 FILE_PATH = "modules/easter_egg/ee_lores/"
 
 
-class LorePlayer():
+class LorePlayer:
     """
-        Easter egg dialog player for specific friends
+    Easter egg dialog player for specific friends
     """
+
     snowflake = "0"
     file_path = ""
     cur_line = 0
@@ -22,39 +22,13 @@ class LorePlayer():
     def get_cur_line(self):
         return self.cur_line
 
-    def get_last_int(line):
-        # last number in string minus 1
-        return int(re.findall(r'\d+', line)[-1]) - 1
-
     def readline(self, ip):
         with open(self.file_path) as f:
             for i, line in enumerate(f):
-                # try:
-                #     print("i:        "+str(i))
-                #     print("self.cur: "+str(self.cur_line))
-                #     print("input:    " + ip)
-                #     print("cur line: "+line)
-                #     print("------------------")
-                # except:
-                #     pass
-
                 if i < self.cur_line:
                     continue
                 elif i > self.cur_line:
                     break
-                elif (sgnl := line[0]) == '#':
-                    self.cur_line += 1
-                    continue
-                elif sgnl == '?':
-                    if ip[2:] == line.split(' ')[1]:
-                        self.cur_line = DialogPlayer.get_last_int(line)
-                        continue
-                    else:
-                        self.cur_line += 1
-                        continue
-                elif sgnl == '}':
-                    self.cur_line = DialogPlayer.get_last_int(line)
-                    continue
 
                 self.cur_line += 1
                 return line
@@ -62,23 +36,23 @@ class LorePlayer():
 
 
 # https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
-class LorePlayerManager():
+class LorePlayerManager:
 
     players = {}
     data = {}
-    saved_path = FILE_PATH+'data.json'
+    saved_path = FILE_PATH + "data.json"
 
     def __init__(self):
         if not os.path.isfile(self.saved_path):
-            os.makedirs(FILE_PATH+"active/")
-            with open(self.saved_path, 'w') as f:
+            os.makedirs(FILE_PATH + "active/")
+            with open(self.saved_path, "w") as f:
                 f.write("{}")
-        with open(self.saved_path, 'r') as json_file:
+        with open(self.saved_path, "r") as json_file:
             self.data = json.load(json_file)
 
-        for file in os.listdir(FILE_PATH+"active/"):
+        for file in os.listdir(FILE_PATH + "active/"):
             if file.endswith(".txt"):
-                snwflk = file.split('.', 1)[0]
+                snwflk = file.split(".", 1)[0]
                 if snwflk not in (dt := self.data):
                     dt[snwflk] = 0
                 self.players[snwflk] = LorePlayer(snwflk, dt[snwflk])
@@ -92,9 +66,9 @@ class LorePlayerManager():
             line = playr.readline(msg.content)
 
             if line:
-                await msg.channel.send(f"{line}{choice(['Anyways','Also','By the way','Oh and','Um..'])},")
+                await msg.channel.send(f"{line} Anyways,")
 
             if self.data[snwflk] != (l := playr.get_cur_line()):
                 self.data[snwflk] = l
-                with open(self.saved_path, 'w') as outfile:
+                with open(self.saved_path, "w") as outfile:
                     json.dump(self.data, outfile)

@@ -11,12 +11,12 @@ class ImageStore(ImageOpener):
 
 class ClassPredictor():
     initialized = False
+    INPUT_SIZE = 299
 
     def __init__(self):
         if ClassPredictor.initialized:
             return
         import tflite_runtime.interpreter as tflite
-        ClassPredictor.INPUT_SIZE = 299
         ClassPredictor._model = tflite.Interpreter(model_path='modules/image_awareness/EV-classify-1605309902.tflite')
         ClassPredictor._model.allocate_tensors()
         ClassPredictor.labels = [

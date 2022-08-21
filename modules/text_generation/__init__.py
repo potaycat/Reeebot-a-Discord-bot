@@ -1,6 +1,6 @@
 from discord.ext import commands
 from .backend import GPT2Wrapper
-from .chatbot import Talking
+# from .chatbot import Talking
 
 
 class AITextGenerator(commands.Cog, name="Text Synthesis"):

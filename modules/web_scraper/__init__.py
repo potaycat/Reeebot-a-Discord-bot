@@ -9,7 +9,7 @@ class Scraper(commands.Cog, name="2. Web Scraping"):
         Searches Pixiv for illustrations
         Usage: `pixiv <keywords>`
         """
-        response = PixivApiUtilizer.getSearchRes(
+        response = await PixivApiUtilizer.getSearchRes(
             ctx.message.content.split("pixiv ", 1)[1], ctx.channel.is_nsfw()
         )
         await ctx.send(response)

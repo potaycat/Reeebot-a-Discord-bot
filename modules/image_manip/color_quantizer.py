@@ -20,14 +20,14 @@ if __name__ != '__main__':
     class ColorQuantizer(ImageOpener):
 
         def kmeans_quantize(self, n_clusters=8):
-            rgb_mat = np.reshape(self._image, (self.SIZE_Y*self.SIZE_X, 3))
+            rgb_mat = np.reshape(self.image_, (self.SIZE_Y*self.SIZE_X, 3))
             km = cluster.MiniBatchKMeans(n_clusters, random_state=0)
             y_cl = km.fit_predict(rgb_mat)
             self.color_ls = km.cluster_centers_
 
             
         def nearest_color_quantize(self, tolerance=DEFAULT_TOLERANCE, limit=None):
-            pixels = np.reshape(self._image, (self.SIZE_Y*self.SIZE_X, 3))
+            pixels = np.reshape(self.image_, (self.SIZE_Y*self.SIZE_X, 3))
             pixel_count = len(pixels)
             colors = _count_colors(pixels)
             colors = _compress(colors, tolerance)
@@ -50,7 +50,7 @@ if __name__ != '__main__':
                 else:
                     display = cv2.hconcat([display, color_mat])
             exprt_path = FILE_PATH+"palette.png"
-            cv2.imwrite(exprt_path, cv2.cvtColor(display, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(exprt_path, display)
             return exprt_path
 
 
