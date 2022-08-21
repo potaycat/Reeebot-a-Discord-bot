@@ -4,17 +4,17 @@ from .presets import ImageFilterer
 from .color_quantizer import ColorQuantizer
 
 
-class QuickImageEdit(commands.Cog, name='3. Image Manipulating'):
+class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
     """
-        Perform image processing.
-        Send along user mention, image link or image attachment.
-        Leave blank for your own avatar.
+    Perform image processing.
+    Send along user mention, image link or image attachment.
+    Leave blank for your own avatar.
     """
 
     @commands.command()
     async def deepfry(self, ctx):
         """
-            Lmao
+        Lmao
         """
         img = ImageFilterer()
         url = img.image_url_from_msg(ctx.message)
@@ -26,7 +26,7 @@ class QuickImageEdit(commands.Cog, name='3. Image Manipulating'):
     @commands.command()
     async def wholesome(self, ctx):
         """
-            UwU
+        UwU
         """
         img = ImageFilterer()
         url = img.image_url_from_msg(ctx.message)
@@ -38,9 +38,9 @@ class QuickImageEdit(commands.Cog, name='3. Image Manipulating'):
     @commands.group(invoke_without_command=True)
     async def palette(self, ctx, limit=None):
         """
-            Creates a color palette from an image.
-            Pick between 2 color quantize methods.
-            Usage: `palette <number of colors> <image url>`
+        Creates a color palette from an image.
+        Pick between 2 color quantize methods.
+        Usage: `palette <number of colors> <image url>`
         """
         img = ColorQuantizer()
         url = img.image_url_from_msg(ctx.message)
@@ -52,8 +52,8 @@ class QuickImageEdit(commands.Cog, name='3. Image Manipulating'):
     @palette.command()
     async def kmeans(self, ctx, n_clusters=8):
         """
-            Use k-means
-            Usage: `palette kmeans <number of colors> <image url>`
+        Use k-means
+        Usage: `palette kmeans <number of colors> <image url>`
         """
         img = ColorQuantizer()
         url = img.image_url_from_msg(ctx.message)
@@ -63,6 +63,5 @@ class QuickImageEdit(commands.Cog, name='3. Image Manipulating'):
         await ctx.send(file=File(file_path))
 
 
-
-def setup(bot):
-    bot.add_cog(QuickImageEdit(bot))
+async def setup(bot):
+    await bot.add_cog(QuickImageEdit(bot))

@@ -1,22 +1,24 @@
-from modules.easter_egg.eeEV_recognize import eeAware
-from modules.easter_egg.ee_lore_player import LorePlayerManager
+from modules.easter_egg import ee_lore_player, eeEV_recognize
 from discord import Intents
 from discord.ext import commands
 import os
+import asyncio
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
-TOKEN = os.getenv('DISCORD_TOKEN')
-PREFIX = os.getenv('PREFIX')
+TOKEN = os.getenv("DISCORD_TOKEN")
+PREFIX = os.getenv("PREFIX")
+LOGGING_CHANNEL_ID = int(os.getenv("LOGGING_CHANNEL_ID"))
 
 intents = Intents.default()
 intents.members = True
-bot = commands.Bot(command_prefix=PREFIX,
-                   intents=intents, case_insensitive=True)
+intents.message_content = True
+bot = commands.Bot(command_prefix=PREFIX, intents=intents, case_insensitive=True)
 startup_extensions = [
     "modules.echo",
-    "modules.rce",
+    "modules.RCE",
     "modules.web_scraper.scraper",
     "modules.image_manip.manip",
     "modules.image_awareness.aware",
@@ -27,11 +29,11 @@ startup_extensions = [
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
-    await bot.get_channel(int(os.getenv('LOGGING_CHANNEL_ID'))).send('Online ' + PREFIX)
+    await bot.get_channel(LOGGING_CHANNEL_ID).send("Online " + PREFIX)
 
 
-ee = LorePlayerManager()
-eeEV = eeAware()
+ee = ee_lore_player.LorePlayerManager()
+eeEV = eeEV_recognize.eeAware()
 
 
 @bot.event
@@ -42,9 +44,13 @@ async def on_message(msg):
         await ee.replyIfMatch(msg)
         if matchThenReply := eeEV.recognize(msg.author.avatar_url):
             async with msg.channel.typing():
-                await msg.channel.send(f"{matchThenReply}Type `{PREFIX}help` to see my commands")
+                await msg.channel.send(
+                    f"{matchThenReply}Type `{PREFIX}help` to see my commands"
+                )
         else:
-            await msg.channel.send(f"Hi <@{msg.author.id}>! Type `{PREFIX}help` to see my commands")
+            await msg.channel.send(
+                f"Hi <@{msg.author.id}>! Type `{PREFIX}help` to see my commands"
+            )
     await bot.process_commands(msg)
 
 
@@ -53,17 +59,16 @@ async def on_command_error(ctx, error):
     await ctx.send(f"```{error}```")
 
 
-@bot.command(name='ping')
+@bot.command(name="ping")
 async def cal_ping(ctx):
-    await ctx.send(f'Pong! Latency: {bot.latency}')
+    await ctx.send(f"Pong! Latency: {bot.latency}")
+
+
+async def main():
+    for extension in startup_extensions:
+        await bot.load_extension(extension)
+    await bot.start(TOKEN)
 
 
 if __name__ == "__main__":
-    for extension in startup_extensions:
-        try:
-            bot.load_extension(extension)
-        except Exception as e:
-            exc = f"{type(e).__name__}: {e}"
-            print(f"Failed to load extension {extension}\n{exc}")
-
-    bot.run(TOKEN)
+    asyncio.run(main())
