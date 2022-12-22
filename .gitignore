@@ -1,7 +1,7 @@
 .env
 venv
 __pycache__
-modules/easter_egg/ee_lores/*
+data/
 modules/image_manip/comvis/*
 !modules/image_manip/comvis/emoji
 modules/text_generation/model/*

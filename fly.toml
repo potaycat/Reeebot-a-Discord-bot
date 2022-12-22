@@ -1,0 +1,10 @@
+# fly.toml file generated for reeebot on 2022-12-23T10:41:39+07:00
+
+app = "reeebot"
+kill_signal = "SIGINT"
+kill_timeout = 15
+
+[env]
+
+[processes]
+  discord-bot = "python main.py"

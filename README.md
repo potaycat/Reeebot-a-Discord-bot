@@ -3,10 +3,9 @@ A Discord bot named *Reeebot*
 
 
 ### Hobbyist project bot features:
-- Scraper for photos in a channel
-- Secret message player
-- Avatar recognizer
+- Avatar recognizer (no more)
 - Quick image edits
-- GPT-2 based chat bot
+- GPT-2 based chat bot (no more)
 - pixiv search
-- Other miscellaneous
+- discord jupyter notebook because
+- Some other things

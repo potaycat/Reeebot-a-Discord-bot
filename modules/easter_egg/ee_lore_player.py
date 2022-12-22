@@ -2,7 +2,7 @@ import os
 import json
 import re
 
-FILE_PATH = "modules/easter_egg/ee_lores/"
+FILE_PATH = "data/ee_lores/"
 
 
 class LorePlayer:
