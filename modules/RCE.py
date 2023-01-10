@@ -7,15 +7,14 @@ import io
 from contextlib import redirect_stdout
 
 
-LOGGING_CHANNEL_ID = int(os.getenv("LOGGING_CHANNEL_ID"))
 PREFIX = os.getenv("PREFIX")
 
 
-class RCE(commands.Cog, name="5. Expert Mode"):
+class RCE(commands.Cog, name="4. Pythonista"):
     def __init__(self, bot):
         self.bot = bot
         self.TIME_OUT = 600
-        self.BOT_OWNER = 510768840972566528
+        PREFIX = bot.PREFIX
 
     def preprocess(self, s):
         if s.startswith(p := f"{PREFIX}run"):
@@ -37,7 +36,7 @@ class RCE(commands.Cog, name="5. Expert Mode"):
         """
         ok = False
         for mem in ctx.channel.members:
-            if mem.id == self.BOT_OWNER:
+            if mem.id == self.bot.OWNER_ID:
                 ok = True
                 break
         if not ok:
@@ -78,7 +77,7 @@ You can edit the code then click "Rerun" to fix error.')"""
                         edited = False
                 else:
                     edited = False
-            if runner.id == self.BOT_OWNER:
+            if runner.id == self.bot.OWNER_ID:
                 return
             embed = discord.Embed(
                 title="Running snippet [jump]", url=ctx.message.jump_url, color=0xFFA500
@@ -91,7 +90,7 @@ You can edit the code then click "Rerun" to fix error.')"""
                     value="```python\n" + snippet[:1500] + "```",
                     inline=False,
                 )
-            await self.bot.get_channel(LOGGING_CHANNEL_ID).send(embed=embed)
+            await self.bot.log_channel.send(embed=embed)
 
         try:
             _, result = await asyncio.gather(

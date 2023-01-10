@@ -44,7 +44,7 @@ class LorePlayerManager:
 
     def __init__(self):
         if not os.path.isfile(self.saved_path):
-            os.makedirs(FILE_PATH + "active/")
+            os.makedirs(FILE_PATH + "active/", exist_ok=True)
             with open(self.saved_path, "w") as f:
                 f.write("{}")
         with open(self.saved_path, "r") as json_file:

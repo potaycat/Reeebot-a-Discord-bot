@@ -1,27 +1,23 @@
 from discord.ext import commands
-from .text_generation.backend import GPT2Wrapper
 
 
 class Echo(commands.Cog, name="1. Echoing"):
     """
-    Let the bot do something with your text
+    Text repeater
     """
 
-    @commands.command()
-    async def say(self, ctx, *, to_repeat=""):
-        """
-        Repeats something
-        """
-        if to_repeat == "":
-            if GPT2Wrapper.initialized:
-                await ctx.send(GPT2Wrapper.gen())
-            else:
-                await ctx.send("Hello")
-        else:
-            await ctx.send(to_repeat)
+    def __init__(self, bot):
+        self.bot = bot
 
-    @commands.command()
-    async def eeveefy(self, ctx, word="Eevee"):
+    @commands.hybrid_command(name="echo")
+    async def ping(self, ctx, *, words=""):
+        if words:
+            await ctx.send(words)
+        else:
+            await ctx.send(f"Echo! Latency: {self.bot.latency}")
+
+    @commands.hybrid_command()
+    async def eeveefy(self, ctx, word):
         """
         Eeveefies a word
         """

@@ -1,10 +1,25 @@
-# fly.toml file generated for reeebot on 2022-12-23T10:41:39+07:00
+# fly.toml file generated for reeebot-230113 on 2023-01-13T12:26:11+07:00
 
-app = "reeebot"
+app = "reeebot-230113"
 kill_signal = "SIGINT"
 kill_timeout = 15
 
 [env]
 
+[experimental]
+  private_network = true
+
 [processes]
   discord-bot = "python main.py"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = "80"
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = "443"

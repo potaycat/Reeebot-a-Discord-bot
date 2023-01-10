@@ -25,8 +25,8 @@ class ImageFilterer(ImageOpener):
                 f'{FILE_PATH}emoji/wholesome/{choice(wholesome_set)}')
         self.radial_blur()
 
-    def export_png(self):
-        exprt_path = FILE_PATH+"export.png"
+    async def export_png(self, fname):
+        exprt_path = f"{FILE_PATH}{fname}.png"
         cv2.imwrite(exprt_path, self.image_)
         return exprt_path
 
