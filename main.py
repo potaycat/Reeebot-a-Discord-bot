@@ -5,11 +5,13 @@ from discord.ext.commands import Bot
 from dotenv import load_dotenv
 from modules.easter_egg import ee_lore_player, eeEV_recognize
 from help_cmd import MyHelpCommand
+import logging
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = os.getenv("PREFIX")
 LOGGING_CHANNEL_ID = int(os.getenv("LOGGING_CHANNEL_ID"))
+LOW_LOGGING_CHANNEL_ID = int(os.getenv("LOW_LOGGING_CHANNEL_ID"))
 OWNER_ID = int(os.getenv("BOT_OWNER"))
 
 ee_lore = ee_lore_player.LorePlayerManager()
@@ -48,7 +50,8 @@ class Reeebot(Bot):
 
     async def on_ready(self):
         self.log_channel = self.get_channel(LOGGING_CHANNEL_ID)
-        await self.log_channel.send(f"Online {PREFIX}")
+        self.low_log_channel = self.get_channel(LOW_LOGGING_CHANNEL_ID)
+        await self.low_log_channel.send(f"Online {PREFIX}")
         print("READY")
 
     async def on_guild_join(self, guild):
@@ -75,5 +78,6 @@ class Reeebot(Bot):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="data/reeebot.log")
     bot = Reeebot()
     bot.run(TOKEN)

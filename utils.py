@@ -3,6 +3,7 @@ import numpy as np
 import requests
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from discord import Embed
 
 executor = ThreadPoolExecutor()
 
@@ -45,13 +46,17 @@ class ImageOpener:
         self.image_ = cv2.resize(self.image_, dim, interpolation=cv2.INTER_AREA)
 
 
-async def arun_blockings(*blockings):
+async def run_blockings(*blockings):
     loop = asyncio.get_event_loop()
     tasks = [loop.run_in_executor(executor, *fun) for fun in blockings]
     results = await asyncio.gather(*tasks)
     return results
 
 
-async def arun_blocking(blocking):
-    (result,) = await arun_blockings(blocking)
+async def run_blocking(blocking):
+    (result,) = await run_blockings(blocking)
     return result
+
+
+def dict2embed(fields, **embed_kwargs):
+    ...
