@@ -1,7 +1,7 @@
 from discord.ext import commands
 from utils import run_blocking, dict2embed
 import os
-from discord import Attachment
+import discord
 import pickle
 import requests
 import logging
@@ -57,6 +57,11 @@ class ChatCog(commands.Cog, name="5. I talk"):
             "msg_url": "<" + ctx.message.jump_url + ">",
         }
         self.logger.info(log_instance)
+        log_instance = discord.Embed()
+        log_instance.set_author(name=f"{ctx.author}({ctx.author.id})", icon_url=ctx.author.avatar.url)
+        log_instance.add_field(name="Question", value=prompt)
+        log_instance.add_field(name="Meassage Url", value=ctx.message.jump_url, inline=False)
+        log_instance.set_footer(text=f"Guild: {ctx.guild}")
         for i in range(3):
             try:
                 print("ASKING...")
@@ -76,7 +81,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
                 f"\n`convo_id:{res['conversation_id']} parent_id:{res['parent_id']}`"
             )
         await asyncio.gather(
-            ctx.reply(to_send), self.bot.low_log_channel.send(log_instance)
+            ctx.reply(to_send), self.bot.low_log_channel.send(embed=log_instance)
         )
         print("ok")
 
