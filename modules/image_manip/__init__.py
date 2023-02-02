@@ -62,7 +62,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         file_path = img.export_png()
         await ctx.send(file=File(file_path))
 
-    @palette.command()
+    # @palette.command()
     async def kmeans(
         self,
         ctx,

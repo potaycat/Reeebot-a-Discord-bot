@@ -21,8 +21,8 @@ class Echo(commands.Cog, name="1. Echoing"):
         """
         Eeveefies a word
         """
-        # if echo[-1] in ['a', 'e', 'i', 'o', 'u']:
-        response = word.split(" ", 1)[0] + ("e" if word[-1] != "e" else "") + "on"
+        word = word.split(" ", 1)[0]
+        response = word + ("e" if word[-1] != "e" else "") + "on"
         await ctx.send(response)
 
 

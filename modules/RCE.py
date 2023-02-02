@@ -10,11 +10,16 @@ from contextlib import redirect_stdout
 PREFIX = os.getenv("PREFIX")
 
 
+def format_result(r):
+    if r.__len__() > 1900:
+        r = r[-1900:] + "\n`result trimmed to 1900 chars`"
+    return r or "`Finished`"
+
+
 class RCE(commands.Cog, name="4. Pythonista"):
     def __init__(self, bot):
         self.bot = bot
         self.TIME_OUT = 600
-        PREFIX = bot.PREFIX
 
     def preprocess(self, s):
         if s.startswith(p := f"{PREFIX}run"):
@@ -46,7 +51,7 @@ class RCE(commands.Cog, name="4. Pythonista"):
         _run = lambda i: self._run(ctx, i)
         result = await _run(None)
         rerun = Buttons(_run)
-        rerun.res_msg = await ctx.reply(result or "Finished", view=rerun)
+        rerun.res_msg = await ctx.reply(format_result(result), view=rerun)
 
     async def _run(self, ctx, interaction=None):
         snippet = self.preprocess(ctx.message.content)
@@ -93,9 +98,8 @@ You can edit the code then click "Rerun" to fix error.')"""
             await self.bot.log_channel.send(embed=embed)
 
         try:
-            _, result = await asyncio.gather(
-                monitor(), asyncio.wait_for(execute_snippet(), timeout=self.TIME_OUT)
-            )
+            asyncio.create_task(monitor())
+            result = await asyncio.wait_for(execute_snippet(), timeout=self.TIME_OUT)
         except Exception:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             result = f"```fix\n{exc_type.__name__}: {exc_obj}```"  # at line {exc_tb.tb_lineno}```"
@@ -116,7 +120,7 @@ class Buttons(discord.ui.View):
     async def retry(self, interaction, button):
         result = await self.execute(interaction)
         await interaction.response.edit_message(
-            content=f"{result}<@{interaction.user.id}> reran ({self.count})"
+            content=f"{format_result(result)}<@{interaction.user.id}>` reran ({self.count})`"
         )
         self.count += 1
 

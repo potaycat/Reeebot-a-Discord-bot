@@ -3,10 +3,9 @@ A Discord bot named *Reeebot*
 
 
 ### Hobbyist project bot features:
+- LLM Chat bot
 - Avatar recognizer (no more)
 - Quick image edits
-- GPT-2 based chat bot (no more)
-- Chat bot
 - pixiv search
 - discord jupyter notebook because
 - Some other things

@@ -4,6 +4,7 @@ import requests
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from discord import Embed
+import typing as t
 
 executor = ThreadPoolExecutor()
 
@@ -14,10 +15,12 @@ class ImageOpener:
     image_: cv2
 
     async def load_from_url(self, url):
+        await run_blocking((self._load_from_url, url))
+
+    def _load_from_url(self, url):
         # https://stackoverflow.com/questions/57539233/how-to-open-an-image-from-an-url-with-opencv-using-requests-from-python
-        # TODO async request
-        resp = requests.get(url, stream=True).raw
-        img = np.asarray(bytearray(resp.read()), dtype="uint8")
+        img = requests.get(url, stream=True).raw
+        img = np.asarray(bytearray(img.read()), dtype="uint8")
         img = cv2.imdecode(img, cv2.IMREAD_COLOR)
         self.image_ = img
         self._normalize_size()
@@ -53,7 +56,7 @@ async def run_blockings(*blockings):
     return results
 
 
-async def run_blocking(blocking):
+async def run_blocking(blocking: t.Tuple[t.Callable, t.Any]):
     (result,) = await run_blockings(blocking)
     return result
 
