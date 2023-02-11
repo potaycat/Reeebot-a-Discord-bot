@@ -51,7 +51,10 @@ class RCE(commands.Cog, name="4. Pythonista"):
         _run = lambda i: self._run(ctx, i)
         result = await _run(None)
         rerun = Buttons(_run)
-        rerun.res_msg = await ctx.reply(format_result(result), view=rerun)
+        try:
+            rerun.res_msg = await ctx.reply(format_result(result), view=rerun)
+        except:
+            pass
 
     async def _run(self, ctx, interaction=None):
         snippet = self.preprocess(ctx.message.content)

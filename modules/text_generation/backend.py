@@ -1,70 +1,70 @@
-from .pygmalion.model import run_raw_inference
-from .pygmalion.prompting import build_prompt_for
-from .pygmalion.parsing import parse_messages_from_str
 import typing as t
 
 
-class GPTWrapper:
+class Blenderbot1B:
     initialized = False
 
-    def __init__(self, llm):
-        from transformers import AutoTokenizer, AutoModelForCausalLM
+    def __init__(self):
+        import torch
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+        from transformers import set_seed
 
-        GPTWrapper.tokenizer = AutoTokenizer.from_pretrained(llm)
-        GPTWrapper.model = AutoModelForCausalLM.from_pretrained(llm).to("cpu")
-        GPTWrapper.generation_settings = {
-            "do_sample": True,
-            "max_new_tokens": 42,
-            "temperature": 0.9,
-            "top_p": 0.3,
-            "top_k": 0,
-            "typical_p": 1.0,
-            "repetition_penalty": 1.05,
+        name = "facebook/blenderbot-1B-distill"
+        torch.set_grad_enabled(False)
+        self.__class__.tokenizer = AutoTokenizer.from_pretrained(name)
+        self.__class__.model = AutoModelForSeq2SeqLM.from_pretrained(name)
+        self.__class__.generation_settings = {
+            'min_new_tokens':24,
+            'max_new_tokens':128,
         }
-        GPTWrapper.char_settings = {
-            "char_name": "Reon",
-            "_user_name": None,
-            "char_persona": "A boy cat",
-            "char_greeting": "Meow! Good morning!",
-            "world_scenario": "You meet the boy cat. He is happy to see you.",
-            "example_dialogue": "You: Can you meow for me?\nReon: Yes I can! Meow!\nYou: You're such a good cat\nReon: I am a good cat~\n",
-        }
-
-        GPTWrapper.initialized = True
+        self.__class__.name = name
+        self.__class__.initialized = True
 
     @staticmethod
-    def inference_fn(
-        history: t.List[str],
-        user_input: str,
-        generation_settings: t.Dict[str, t.Any],
-        char_settings: t.Dict[str, t.Any],
-    ) -> str:
-        """
-        https://github.com/PygmalionAI/gradio-ui
-        """
-        char_greeting = char_settings["char_greeting"]
-        char_name = char_settings["char_name"]
-        if len(history) == 0 and char_greeting is not None:
-            return f"{char_name}: {char_greeting}"
-
-        prompt = build_prompt_for(
-            history=history,
-            user_message=user_input,
-            char_name=char_name,
-            char_persona=char_settings["char_persona"],
-            example_dialogue=char_settings["example_dialogue"],
-            world_scenario=char_settings["world_scenario"],
+    def generate(prompt: str, gen_settings: t.Dict[str, t.Any]):
+        input_ids = Blenderbot1B.tokenizer(prompt, return_tensors="pt")
+        beam_output = Blenderbot1B.model.generate(
+            **input_ids,
+            **gen_settings,
         )
+        out = Blenderbot1B.tokenizer.decode(beam_output[0], skip_special_tokens=True)
+        return out.strip()
 
-        model_output = run_raw_inference(
-            GPTWrapper.model,
-            GPTWrapper.tokenizer,
-            prompt,
-            user_input,
-            **generation_settings,
+
+class BioGPT:
+    initialized = False
+
+    def __init__(self):
+        import torch
+        from transformers import BioGptTokenizer, BioGptForCausalLM
+
+        name = "microsoft/biogpt"
+        torch.set_grad_enabled(False)
+        self.__class__.tokenizer = BioGptTokenizer.from_pretrained(name)
+        self.__class__.model = BioGptForCausalLM.from_pretrained(name)
+        self.__class__.generation_settings = {
+            'min_new_tokens':24,
+            'max_new_tokens':128,
+            'early_stopping':True,
+            'do_sample':False,
+            'num_beams':2,
+            'num_beam_groups':2,
+            'temperature':0.9,
+            'top_p':0.9,
+            'top_k':0,
+            'repetition_penalty':1.9,
+        }
+        self.__class__.name = name
+        self.__class__.initialized = True
+
+    @staticmethod
+    def generate(prompt: str, gen_settings: t.Dict[str, t.Any]):
+        input_ids = BioGPT.tokenizer(prompt, return_tensors="pt")
+        beam_output = BioGPT.model.generate(
+            **input_ids,
+            **gen_settings,
         )
+        out = BioGPT.tokenizer.decode(beam_output[0], skip_special_tokens=True)
+        return out.strip()
 
-        generated_messages = parse_messages_from_str(model_output, ["You", char_name])
-        bot_message = generated_messages[0]
-
-        return bot_message
+ 

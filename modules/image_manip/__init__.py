@@ -12,8 +12,8 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
     Leave blank for your own avatar.
     """
 
-    @commands.hybrid_command()
-    async def deepfry(
+    @commands.hybrid_group(invoke_without_command=True, fallback="deepfry")
+    async def quick(
         self, ctx, avatar: Optional[User], upload: Optional[Attachment], img_link=""
     ):
         """
@@ -27,7 +27,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         )
         await ctx.send(file=File(file_path))
 
-    @commands.hybrid_command()
+    @quick.command()
     async def wholesome(
         self, ctx, avatar: Optional[User], upload: Optional[Attachment], img_link=""
     ):
@@ -80,6 +80,12 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         img.kmeans_quantize(n_clusters=n_clusters)
         file_path = img.export_png()
         await ctx.send(file=File(file_path))
+
+    
+    # @commands.hybrid_command()
+    # async def editor(
+    #     self, ctx, avatar: Optional[User], upload: Optional[Attachment], img_link=""
+    # ):
 
 
 async def setup(bot):
