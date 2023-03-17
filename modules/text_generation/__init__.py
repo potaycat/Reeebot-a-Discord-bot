@@ -1,6 +1,6 @@
 from discord.ext import commands
 from discord.app_commands import choices, Choice
-from utils import run_blocking, dict2embed
+from utils import run_blocking, dict2embed, alt_thread
 import os
 import discord
 import logging
@@ -8,26 +8,17 @@ import asyncio
 import json
 from .backend import Blenderbot1B, BioGPT
 from .const import ChatSona, ChatConf
-from revChatGPT.V1 import Chatbot
-
-
-def getCB():
-    return Chatbot(
-        config={"email": os.getenv("OPENAI_EMAIL"), "password": os.getenv("OPENAI_PW")}
-    )
+import openai
 
 
 class ChatCog(commands.Cog, name="5. I talk"):
     def __init__(self, bot):
         self.bot = bot
-        try:
-            self.cb = getCB()
-        except:
-            self.cb = None
-        finally:
-            self.chnl = 0
-        Blenderbot1B()
-        BioGPT()
+        self.chat = openai.ChatCompletion
+        self.chat_hist = {}
+
+        # Blenderbot1B()
+        # BioGPT()
         if ChatConf.USE_FILE:
             ChatConf.DATA_PATH = "data/chatbot"
             os.makedirs(ChatConf.DATA_PATH, exist_ok=True)
@@ -48,6 +39,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
                 saved_data[int(chnl_id)] = chnl_data | ChatConf.SAVE_DAT_STRUCT
         return saved_data
 
+    @alt_thread
     def save_chat_data(self, chnl_id: int, data):
         self.chuser_dat[chnl_id] |= data
         if ChatConf.USE_FILE:
@@ -108,10 +100,103 @@ class ChatCog(commands.Cog, name="5. I talk"):
         self.logger.info(log_instance)
         await self.bot.low_log_channel.send(str(log_instance)[:2000])
 
-    @commands.hybrid_group(invoke_without_command=True, fallback="chit")
-    async def chat(self, ctx, *, message, reset_chat=False):
+    @commands.hybrid_group(fallback="reon")
+    @choices(
+        mode=[
+            Choice(name="Maid", value="maid"),
+            Choice(name="Cat", value="cat"),
+            Choice(name="Assistant", value="raw"),
+            Choice(name="Yours (Coming soon)", value="yours"),
+        ]
+    )
+    async def hey(self, ctx, *, message, mode: Choice[str] = "fluffy"):
         """
-        Replies (blenderbot-1B-distill)
+        Talk about anything (gpt-3.5-turbo)
+        """
+        webhook = self.preflight(ctx)
+        match mode:
+            case "maid":
+                sona = ChatSona.MAID
+            case "cat":
+                sona = ChatSona.CAT
+            case "raw":
+                sona = ChatSona.ASSIST
+            case _:
+                sona = ChatSona.FLUFFY
+        hist = self.chat_hist.get(ctx.channel.id)
+        if not hist:
+            hist = [*sona["starter"], {"role": "user", "content": message}]
+        else:
+            t_len = 0
+            get = []
+            while t_len < 100 and hist.__len__():
+                m_ = hist.pop(0)
+                get.append(m_)
+                t_len += m_.__len__()
+            hist = [*sona["starter"], *get, {"role": "user", "content": message}]
+        temperature = sona["temperature"]
+
+        @alt_thread
+        def ask():
+            return self.chat.create(
+                model="gpt-3.5-turbo",
+                temperature=temperature,
+                messages=hist,
+            )
+
+        async def monitor(res=None):
+            d_ = {
+                "asker": f"{ctx.author} ({ctx.author.id})",
+                "msg_url": "<" + ctx.message.jump_url + ">",
+                '"mode"': str(mode),
+                "revision": "230317",
+                "question": message[:300],
+                "response": str(json.loads(str(res)))[:1500],
+            }
+            await self.bot.low_log_channel.send(d_)
+
+        res = await ask()
+        self.chat_hist[ctx.channel.id] = [*hist[1:], res.choices[0].message]
+        await self.reply(ctx, webhook, message, res.choices[0].message.content, sona)
+        await monitor(res)
+
+    @commands.command()
+    async def hey_(self, ctx, *, q=""):
+        await self.hey(ctx, message=q)
+
+    @commands.command()
+    async def hey_maid(self, ctx, *, q=""):
+        await self.hey(ctx, message=q, mode="maid")
+
+    @commands.command()
+    async def hey_cat(self, ctx, *, q=""):
+        await self.hey(ctx, message=q, mode="cat")
+
+    @commands.command()
+    async def hey_assistant(self, ctx, *, q=""):
+        await self.hey(ctx, message=q, mode="raw")
+
+    @hey.command()
+    async def reon_settings(
+        self,
+        ctx,
+        reset=False,
+        # temperature: float = None,
+    ):
+        """
+        Your settings
+        """
+        chat_dat = self.get_or_create_chat_data(ctx.author.id)
+        if reset:
+            self.chat_hist[ctx.channel.id] = []
+            await ctx.reply("Reset chat ok")
+        else:
+            await ctx.reply("More settings coming soon")
+
+    @hey.command()
+    async def distilled(self, ctx, *, message, reset_chat=False):
+        """
+        Reply (blenderbot-1B-distill)
         """
         webhook = self.preflight(ctx)
         chat_dat = self.get_or_create_chat_data(ctx.author.id)
@@ -130,7 +215,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
         history.append(reply)
         await asyncio.gather(
             self.reply(ctx, webhook, message, reply, ChatSona.REPLIER),
-            run_blocking((self.save_chat_data, ctx.author.id, chat_dat)),
+            self.save_chat_data(ctx.author.id, chat_dat),
         )
         await self.monitor(
             {
@@ -143,7 +228,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             }
         )
 
-    @chat.command()
+    @hey.command()
     async def medic(self, ctx, *, message, reset_chat=False):
         """
         text completion (biogpt)
@@ -169,7 +254,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             }
         )
 
-    @chat.command()
+    @hey.command()
     async def medic_settings(
         self,
         ctx,
@@ -221,92 +306,8 @@ class ChatCog(commands.Cog, name="5. I talk"):
             ctx.interaction.response.send_message(
                 json.dumps(settings, indent=4), ephemeral=True
             ),
-            run_blocking((self.save_chat_data, ctx.author.id, chat_dat)),
+            self.save_chat_data(ctx.author.id, chat_dat),
         )
-
-    @chat.command()
-    @choices(
-        mode=[
-            Choice(name="Maid", value="maid"),
-            Choice(name="Cat", value="cat"),
-            Choice(name="Raw", value="raw"),
-        ]
-    )
-    async def assistant(
-        self,
-        ctx,
-        *,
-        question,
-        mode: Choice[str] = None,
-        # temperature: float = 0.5,
-        reset_chat=False,
-    ):
-        """
-        Answer questions (ChatGPT)
-        """
-        webhook = self.preflight(ctx)
-        if reset_chat:
-            self.cb.reset_chat()
-            return await ctx.reply("Reset chat ok")
-        if self.chnl != ctx.channel.id:
-            self.cb.reset_chat()
-            self.chnl = ctx.channel.id
-        match mode.value if mode else "":
-            case "maid":
-                prompt = "Talk in the style of a maid Umbreon. " + question
-                sona = ChatSona.MAID
-            case "cat":
-                prompt = "Talk in the style of an anime cat. Keep it short. " + question
-                sona = ChatSona.CAT
-            case "raw":
-                prompt = question
-                sona = ChatSona.ASSIST
-            case _:
-                prompt = (
-                    'Talk in a cute Umbreon style. Add "uwu" and "owo". Reply in the language of question asked. '
-                    + question
-                )
-                sona = ChatSona.FLUFFY
-
-        async def monitor(res=None):
-            em = discord.Embed()
-            em.set_author(
-                name=f"{ctx.author}({ctx.author.id})", icon_url=ctx.author.avatar.url
-            )
-            em.add_field(name="Question", value=prompt[:200])
-            # em.add_field(name="Temperature", value=temperature)
-            em.add_field(name="Meassage Url", value=ctx.message.jump_url)
-            em.set_footer(text=f"Guild: {ctx.guild}")
-            if res:
-                em.add_field(name="Answer", value=res[:200])
-            await self.bot.low_log_channel.send(embed=em)
-
-        for i in range(3):
-            print("asking")
-            try:
-                if self.cb == None:
-                    self.cb = getCB()
-
-                def ask():
-                    res = ""
-                    for data in self.cb.ask(prompt):
-                        res = data["message"]
-                    return res
-
-                res = await run_blocking((ask,))
-                if not res:
-                    raise Exception("Caught a hiccup.")
-                break
-            except Exception as e:
-                self.logger.error(e)
-                self.cb = None
-                if i == 2:
-                    res = f"```{e}```"
-                else:
-                    await asyncio.sleep(3)
-        print("done")
-        await self.reply(ctx, webhook, question, res, sona)
-        await monitor(res)
 
 
 async def setup(bot):

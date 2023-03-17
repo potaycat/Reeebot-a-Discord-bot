@@ -2,30 +2,26 @@ import numpy as np
 import cv2
 from random import randint, choice
 import os
-from utils import ImageOpener
-
-
-FILE_PATH = "modules/image_manip/comvis/"
+from utils import ImageOpener, alt_thread
+from .consts import FILE_PATH, DANK_SET, WHOLESOME_SET
 
 
 class ImageFilterer(ImageOpener):
-
+    @alt_thread
     def deepfry(self):
-        dank_set = os.listdir(FILE_PATH+'emoji/dank/')
         for i in range(7):
-            self.emoji_overlay(FILE_PATH+'emoji/dank/' +
-                               choice(dank_set), (80, 72))
+            self.emoji_overlay(FILE_PATH + "emoji/dank/" + choice(DANK_SET), (80, 72))
         self.over_sharpen()
         self.turn_hot()
 
+    @alt_thread
     def wholesome(self):
-        wholesome_set = os.listdir(FILE_PATH+'emoji/wholesome/')
         for i in range(30):
-            self.emoji_overlay(
-                f'{FILE_PATH}emoji/wholesome/{choice(wholesome_set)}')
+            self.emoji_overlay(f"{FILE_PATH}emoji/wholesome/{choice(WHOLESOME_SET)}")
         self.radial_blur()
 
-    async def export_png(self, fname):
+    @alt_thread
+    def export_png(self, fname):
         exprt_path = f"{FILE_PATH}{fname}.png"
         cv2.imwrite(exprt_path, self.image_)
         return exprt_path
@@ -33,14 +29,13 @@ class ImageFilterer(ImageOpener):
     def _rotate_image(self, img, angle):
         image_center = tuple(np.array(img.shape[1::-1]) / 2)
         rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-        result = cv2.warpAffine(
-            img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
+        result = cv2.warpAffine(img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
         return result
 
     def _random_loc(self, margin_x, margin_y):
         pos = (
             randint(0, self.image_.shape[0] - margin_x - 1),
-            randint(0, self.image_.shape[1] - margin_y - 1)
+            randint(0, self.image_.shape[1] - margin_y - 1),
         )
         # print(pos)
         return pos
@@ -58,8 +53,9 @@ class ImageFilterer(ImageOpener):
         alpha_l = 1.0 - alpha_s
 
         for c in range(0, 3):
-            self.image_[y1:y2, x1:x2, c] = (alpha_s * src[:, :, c] +
-                                            alpha_l * self.image_[y1:y2, x1:x2, c])
+            self.image_[y1:y2, x1:x2, c] = (
+                alpha_s * src[:, :, c] + alpha_l * self.image_[y1:y2, x1:x2, c]
+            )
 
         # img[y_offset:y_offset+src.shape[0], x_offset:x_offset+src.shape[1]] = src
 
@@ -79,7 +75,7 @@ class ImageFilterer(ImageOpener):
 
         # generating the kernel
         kernel_motion_blur = np.zeros((size, size))
-        kernel_motion_blur[int((size-1)/2), :] = np.ones(size)
+        kernel_motion_blur[int((size - 1) / 2), :] = np.ones(size)
         kernel_motion_blur = kernel_motion_blur / size
 
         # applying the kernel to the input image
@@ -96,13 +92,21 @@ class ImageFilterer(ImageOpener):
         iterations = 7
 
         growMapx = np.tile(
-            np.arange(h) + ((np.arange(h) - center_x)*blur), (w, 1)).astype(np.float32)
+            np.arange(h) + ((np.arange(h) - center_x) * blur), (w, 1)
+        ).astype(np.float32)
         shrinkMapx = np.tile(
-            np.arange(h) - ((np.arange(h) - center_x)*blur), (w, 1)).astype(np.float32)
-        growMapy = np.tile(np.arange(
-            w) + ((np.arange(w) - center_y)*blur), (h, 1)).transpose().astype(np.float32)
-        shrinkMapy = np.tile(np.arange(
-            w) - ((np.arange(w) - center_y)*blur), (h, 1)).transpose().astype(np.float32)
+            np.arange(h) - ((np.arange(h) - center_x) * blur), (w, 1)
+        ).astype(np.float32)
+        growMapy = (
+            np.tile(np.arange(w) + ((np.arange(w) - center_y) * blur), (h, 1))
+            .transpose()
+            .astype(np.float32)
+        )
+        shrinkMapy = (
+            np.tile(np.arange(w) - ((np.arange(w) - center_y) * blur), (h, 1))
+            .transpose()
+            .astype(np.float32)
+        )
 
         for i in range(iterations):
             tmp1 = cv2.remap(img, growMapx, growMapy, cv2.INTER_LINEAR)
