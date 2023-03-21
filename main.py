@@ -30,7 +30,7 @@ class Reeebot(Bot):
             "modules.RCE",
             "modules.web_scraper",
             "modules.image_manip",
-            # "modules.image_awareness",
+            "modules.image_generation",
             "modules.text_generation",
         ]
         self.OWNER_ID = OWNER_ID
