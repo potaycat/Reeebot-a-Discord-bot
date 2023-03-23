@@ -112,6 +112,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
         Talk about anything (gpt-3.5-turbo)
         """
         webhook = self.preflight(ctx)
+        mode = str(mode)
         match mode:
             case "maid":
                 sona = ChatSona.MAID
@@ -121,20 +122,12 @@ class ChatCog(commands.Cog, name="5. I talk"):
                 sona = ChatSona.ASSIST
             case _:
                 sona = ChatSona.FLUFFY
-        if self.chat_mode.get(ctx.channel.id) != mode.value:
-            self.chat_mode[ctx.channel.id] = mode.value
-            self.chat_hist[ctx.channel.id] = []
-        hist = self.chat_hist.get(ctx.channel.id)
-        if not hist:
-            hist = [*sona["starter"], {"role": "user", "content": message}]
-        else:
-            t_len = 0
-            get = []
-            while t_len < 100 and hist.__len__():
-                m_ = hist.pop(0)
-                get.append(m_)
-                t_len += m_.__len__()
-            hist = [*sona["starter"], *get, {"role": "user", "content": message}]
+        if self.chat_mode.get(cid := ctx.channel.id) != mode:
+            self.chat_mode[cid] = mode
+            self.chat_hist[cid] = []
+        hist = self.chat_hist.get(cid, [])[-3:]
+        user_in = {"role": "user", "content": message}
+        prompt = sona["starter"] + hist + [user_in]
         temperature = sona["temperature"]
 
         @alt_thread
@@ -142,30 +135,37 @@ class ChatCog(commands.Cog, name="5. I talk"):
             return self.chat.create(
                 model="gpt-3.5-turbo",
                 temperature=temperature,
-                messages=hist,
-                max_tokens=4000,
+                messages=prompt,
+                max_tokens=2500,
             )
 
         res = await ask()
-        self.chat_hist[ctx.channel.id] = [*hist[1:], res.choices[0].message]
+        if res.usage.prompt_tokens < 500:
+            hist.append(user_in)
+        if res.usage.completion_tokens < 500:
+            hist.append(res.choices[0].message)
+        self.chat_hist[cid] = hist
         await self.reply(ctx, webhook, message, res.choices[0].message.content, sona)
 
         async def monitor():
-            res = json.loads(str(res))
-            res["choices"][0]["message"]["content"] = res["choices"][0]["message"][
+            r_ = json.loads(str(res))
+            r_["choices"][0]["message"]["content"] = r_["choices"][0]["message"][
                 "content"
             ][:200]
             d_ = {
                 "asker": f"{ctx.author} ({ctx.author.id})",
                 "msg_url": "<" + ctx.message.jump_url + ">",
                 '"mode"': str(mode),
-                "revision": "230317",
+                "revision": "230324",
                 "question": message[:200],
-                "response": str(res),
+                "response": str(r_),
             }
             await self.bot.low_log_channel.send(d_)
 
-        await monitor()
+        try:
+            await monitor()
+        except:
+            pass
 
     @commands.command()
     async def hey_(self, ctx, *, q=""):
