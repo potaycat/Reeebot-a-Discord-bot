@@ -17,6 +17,7 @@ class ChatSona:
             },
         ],
         "temperature": 0.4,
+        "max_tokens": 1000,
     }
     ASSIST = {
         "name": "Reon Assist Mode",
@@ -28,6 +29,7 @@ class ChatSona:
             }
         ],
         "temperature": 0.3,
+        "max_tokens": 2500,
     }
     CAT = {
         "name": "Reon Cat Mode",
@@ -43,6 +45,7 @@ class ChatSona:
             },
         ],
         "temperature": 0.7,
+        "max_tokens": 200,
     }
     FLUFFY = {
         "name": "Reon Fluffy Mode",
@@ -58,17 +61,16 @@ class ChatSona:
             },
         ],
         "temperature": 0.5,
+        "max_tokens": 500,
     }
 
 
 class ChatConf:
-    USE_FILE = True
+    USE_FILE = False
     DATA_PATH = "data/chatbot"
     SAVE_DAT_STRUCT = {
         # "history": [],
         # "char_settings": {},
         # "gen_settings": {},
-        "blenderb_history": [],
-        "blenderb_gen_settings": {},
-        "biogpt_gen_settings": {},
+        "default_mode": "fluffy",
     }

@@ -29,6 +29,16 @@ def alt_thread(fun):
     return wrapper
 
 
+@alt_thread
+def arequests(method, url, headers=None, body=None):
+    match method.lower():
+        case "get":
+            fun = requests.get
+        case "post":
+            fun = requests.post
+    return fun(url, headers=headers, json=body)
+
+
 class ImageOpener:
     SIZE_X = 512
     SIZE_Y = 512

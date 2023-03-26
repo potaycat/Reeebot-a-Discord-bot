@@ -16,26 +16,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
         self.chat = openai.ChatCompletion
         self.chat_hist = {}
         self.chat_mode = {}
-
-        if ChatConf.USE_FILE:
-            ChatConf.DATA_PATH = "data/chatbot"
-            os.makedirs(ChatConf.DATA_PATH, exist_ok=True)
-            self.chuser_dat = self.load_chat_data()
-        else:
-            self.chuser_dat = {}
-        logging.basicConfig(level=logging.INFO, force=True)
-        self.logger = logging.getLogger(__name__)
-        self.logger.debug("ChatCog init!")
-
-    def load_chat_data(self):
-        saved_data = {}
-        for file in os.listdir(ChatConf.DATA_PATH):
-            chnl_id, ext = file.split(".")
-            if ext == "json":
-                with open(os.path.join(ChatConf.DATA_PATH, file), "r") as f:
-                    chnl_data = json.load(f)
-                saved_data[int(chnl_id)] = chnl_data | ChatConf.SAVE_DAT_STRUCT
-        return saved_data
+        self.chuser_dat = {}
 
     @alt_thread
     def save_chat_data(self, chnl_id: int, data):
@@ -94,9 +75,20 @@ class ChatCog(commands.Cog, name="5. I talk"):
             else:
                 await ctx.send(reply)
 
-    async def monitor(self, log_instance):
-        self.logger.info(log_instance)
-        await self.bot.low_log_channel.send(str(log_instance)[:2000])
+    async def monitor(self, ctx, q, mode, res):
+        r_ = json.loads(str(res))
+        r_["choices"][0]["message"]["content"] = r_["choices"][0]["message"]["content"][
+            :200
+        ]
+        d_ = {
+            "asker": f"{ctx.author} ({ctx.author.id})",
+            "msg_url": "<" + ctx.message.jump_url + ">",
+            "command": "hey reon " + mode,
+            "revision": "230327",
+            "question": q[:200],
+            "response": str(r_),
+        }
+        await self.bot.low_log_channel.send(d_)
 
     @commands.hybrid_group(fallback="reon")
     @choices(
@@ -107,12 +99,13 @@ class ChatCog(commands.Cog, name="5. I talk"):
             Choice(name="Yours (Coming soon)", value="yours"),
         ]
     )
-    async def hey(self, ctx, *, message, mode: Choice[str] = "fluffy"):
+    async def hey(self, ctx, *, message, mode: Choice[str] = None):
         """
         Talk about anything (gpt-3.5-turbo)
         """
         webhook = self.preflight(ctx)
-        mode = str(mode)
+        user_dat = self.get_or_create_chat_data(ctx.author.id)
+        mode = user_dat["default_mode"] if mode == None else mode.value
         match mode:
             case "maid":
                 sona = ChatSona.MAID
@@ -128,44 +121,30 @@ class ChatCog(commands.Cog, name="5. I talk"):
         hist = self.chat_hist.get(cid, [])[-3:]
         user_in = {"role": "user", "content": message}
         prompt = sona["starter"] + hist + [user_in]
-        temperature = sona["temperature"]
 
         @alt_thread
         def ask():
-            return self.chat.create(
-                model="gpt-3.5-turbo",
-                temperature=temperature,
-                messages=prompt,
-                max_tokens=2500,
-            )
+            for i in range(3):
+                try:
+                    return self.chat.create(
+                        model="gpt-3.5-turbo",
+                        temperature=sona["temperature"],
+                        messages=prompt,
+                        max_tokens=sona["max_tokens"],
+                    )
+                except:
+                    pass
 
         res = await ask()
-        if res.usage.prompt_tokens < 500:
-            hist.append(user_in)
-        if res.usage.completion_tokens < 500:
-            hist.append(res.choices[0].message)
-        self.chat_hist[cid] = hist
         await self.reply(ctx, webhook, message, res.choices[0].message.content, sona)
-
-        async def monitor():
-            r_ = json.loads(str(res))
-            r_["choices"][0]["message"]["content"] = r_["choices"][0]["message"][
-                "content"
-            ][:200]
-            d_ = {
-                "asker": f"{ctx.author} ({ctx.author.id})",
-                "msg_url": "<" + ctx.message.jump_url + ">",
-                '"mode"': str(mode),
-                "revision": "230324",
-                "question": message[:200],
-                "response": str(r_),
-            }
-            await self.bot.low_log_channel.send(d_)
-
+        if res.usage.prompt_tokens < sona["max_tokens"]:
+            hist.append(user_in)
+        hist.append(res.choices[0].message)
+        self.chat_hist[cid] = hist
         try:
-            await monitor()
-        except:
-            pass
+            await self.monitor(ctx, message, mode, res)
+        except Exception as e:
+            await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
     @commands.command()
     async def hey_(self, ctx, *, q=""):
@@ -184,21 +163,41 @@ class ChatCog(commands.Cog, name="5. I talk"):
         await self.hey(ctx, message=q, mode="raw")
 
     @hey.command()
+    @choices(
+        default_mode=[
+            Choice(name="Maid", value="maid"),
+            Choice(name="Cat", value="cat"),
+            Choice(name="Assistant", value="raw"),
+            Choice(name="Fluffy", value="fluffy"),
+        ]
+    )
     async def reon_settings(
         self,
         ctx,
         reset=False,
-        # temperature: float = None,
+        default_mode: Choice[str] = None,
+        reset_all=False,
     ):
         """
         Your settings
         """
-        chat_dat = self.get_or_create_chat_data(ctx.author.id)
+        uid = ctx.author.id
         if reset:
             self.chat_hist[ctx.channel.id] = []
-            await ctx.reply("Reset chat ok")
+            return await ctx.reply("Reset chat ok")
+        if reset_all:
+            self.chuser_dat.pop(uid, None)
+            return await ctx.reply("Reset all ok")
+
+        user_dat = self.get_or_create_chat_data(uid)
+        if default_mode:
+            user_dat["default_mode"] = default_mode.value
+
+        await self.save_chat_data(uid, user_dat)
+        if i := ctx.interaction:
+            await i.response.send_message(user_dat, ephemeral=True)
         else:
-            await ctx.reply("More settings coming soon")
+            await ctx.send(user_dat)
 
 
 async def setup(bot):
