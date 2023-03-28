@@ -21,7 +21,7 @@ class Reeebot(Bot):
         intents.members = True
         intents.message_content = True
         super().__init__(
-            command_prefix=PREFIX,
+            command_prefix=[PREFIX, PREFIX.title()],
             intents=intents,
             help_command=MyHelpCommand(),
             case_insensitive=True,

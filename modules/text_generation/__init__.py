@@ -95,7 +95,6 @@ class ChatCog(commands.Cog, name="5. I talk"):
         mode=[
             Choice(name="Maid", value="maid"),
             Choice(name="Cat", value="cat"),
-            Choice(name="Assistant", value="raw"),
             Choice(name="Yours (Coming soon)", value="yours"),
         ]
     )
@@ -132,8 +131,9 @@ class ChatCog(commands.Cog, name="5. I talk"):
                         messages=prompt,
                         max_tokens=sona["max_tokens"],
                     )
-                except:
-                    pass
+                except Exception as e:
+                    if i == 2:
+                        raise e
 
         res = await ask()
         await self.reply(ctx, webhook, message, res.choices[0].message.content, sona)
@@ -167,7 +167,6 @@ class ChatCog(commands.Cog, name="5. I talk"):
         default_mode=[
             Choice(name="Maid", value="maid"),
             Choice(name="Cat", value="cat"),
-            Choice(name="Assistant", value="raw"),
             Choice(name="Fluffy", value="fluffy"),
         ]
     )

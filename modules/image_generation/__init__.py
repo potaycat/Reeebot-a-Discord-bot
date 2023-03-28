@@ -64,17 +64,18 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         Imagine a kemono furry
         """
         await ctx.interaction.response.defer()
+        np = negative_prompt
         if easy_negative:
-            if negative_prompt:
-                negative_prompt += ","
-            negative_prompt += "(EasyNegative:1.0),(worst quality, low quality:1.4)"
+            if np:
+                np += ","
+            np += "(EasyNegative:1.0),(worst quality, low quality:1.4),bad anatomy,mutated,ugly hand,missing hand,extra arm,extra leg,extra hand,extra digit,fewer digits"
         if try_prevent_nsfw:
-            if negative_prompt:
-                negative_prompt += ","
-            negative_prompt += "nsfw,nude,naked,navel"
+            if np:
+                np += ","
+            np += "nsfw,nude,naked,navel"
         input_ = {
             "prompt": prompt,
-            "negative_prompt": negative_prompt,
+            "negative_prompt": np,
             "steps": steps,
             "cfg_scale": cfg_scale,
             "sampler_index": "DPM++ 2M Karras"
@@ -141,7 +142,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         d_ = {
             "user": f"{ctx.author} ({ctx.author.id})",
             "command": "imagine kemono",
-            "revision": "230328",
+            "revision": "230328_2",
             "input": str(info)[:1500],
             "job_id": jid,
             "output": "<" + reply.attachments[0].url + ">",
