@@ -8,6 +8,7 @@ import os
 from asyncio import sleep
 from random import randint
 from .help_msg import *
+import discord
 
 
 class ImageGen(commands.Cog, name="4. Image Generation"):
@@ -51,7 +52,9 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         self,
         ctx,
         prompt,
-        negative_prompt="(EasyNegative:1.0),(worst quality, low quality:1.4)",
+        try_prevent_nsfw: bool,
+        easy_negative=True,
+        negative_prompt="",
         sampling_method: Choice[str] = None,
         steps: int = 20,
         cfg_scale: float = 7.5,
@@ -61,8 +64,14 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         Imagine a kemono furry
         """
         await ctx.interaction.response.defer()
-        if not ctx.channel.is_nsfw():
-            negative_prompt += ",nsfw,nude,naked,navel"
+        if easy_negative:
+            if negative_prompt:
+                negative_prompt += ","
+            negative_prompt += "(EasyNegative:1.0),(worst quality, low quality:1.4)"
+        if try_prevent_nsfw:
+            if negative_prompt:
+                negative_prompt += ","
+            negative_prompt += "nsfw,nude,naked,navel"
         input_ = {
             "prompt": prompt,
             "negative_prompt": negative_prompt,
@@ -86,23 +95,38 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                     if x["status"] == "COMPLETED":
                         break
                     else:
-                        await sleep(0.2)
+                        await sleep(0.1)
                 else:
                     raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
         else:
             raise Exception(f"HTTP error: {x.status_code}")
-        r = await ctx.reply(
+        up = await self.bot.img_dump_chnl.send(
             file=File(
                 BytesIO(b64decode(x["output"]["images"][0])),
                 filename="generated.png",
             )
         )
+        btn = ImgButtons()
+        r = await ctx.reply(up.attachments[0].url, view=btn)
+        btn.res_msg = r
+        btn.del_btn_hanldr = (self.delete_generation, id_)
+
         try:
-            await self.monitor(ctx, x, r)
+            await self.monitor(ctx, x, up, id_)
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
-    async def monitor(self, ctx, res, reply):
+    async def delete_generation(self, msg, interaction, jid, reason=None):
+        await msg.delete()
+        d_ = {
+            "actor": f"{interaction.user} ({interaction.user.id})",
+            "job_id": jid,
+            "action": "delete",
+            "reason": reason,
+        }
+        await self.bot.low_log_channel.send(d_)
+
+    async def monitor(self, ctx, res, reply, jid):
         info = {
             k: res["output"]["parameters"][k]
             for k in [
@@ -117,8 +141,9 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         d_ = {
             "user": f"{ctx.author} ({ctx.author.id})",
             "command": "imagine kemono",
-            "revision": "230327",
+            "revision": "230328",
             "input": str(info)[:1500],
+            "job_id": jid,
             "output": "<" + reply.attachments[0].url + ">",
         }
         await self.bot.low_log_channel.send(d_)
@@ -138,6 +163,22 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             await ctx.interaction.response.send_message(help_msg, ephemeral=eph)
         else:
             await ctx.send(help_msg)
+
+
+class ImgButtons(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=300)
+
+    @discord.ui.button(
+        label="Delete",
+        style=discord.ButtonStyle.gray,
+    )
+    async def delete(self, interaction, button):
+        delete_generation, id_ = self.del_btn_hanldr
+        await delete_generation(self.res_msg, interaction, id_)
+
+    async def on_timeout(self):
+        await self.res_msg.edit(view=None)
 
 
 async def setup(bot):

@@ -10,6 +10,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 PREFIX = os.getenv("PREFIX")
 LOGGING_CHANNEL_ID = int(os.getenv("LOGGING_CHANNEL_ID"))
 LOW_LOGGING_CHANNEL_ID = int(os.getenv("LOW_LOGGING_CHANNEL_ID"))
+IMG_DUMP_CHANNEL_ID = int(os.getenv("IMG_DUMP_CHANNEL_ID"))
 OWNER_ID = int(os.getenv("BOT_OWNER"))
 DATA_PATH = "data/"
 
@@ -47,6 +48,7 @@ class Reeebot(Bot):
     async def on_ready(self):
         self.log_channel = self.get_channel(LOGGING_CHANNEL_ID)
         self.low_log_channel = self.get_channel(LOW_LOGGING_CHANNEL_ID)
+        self.img_dump_chnl = self.get_channel(IMG_DUMP_CHANNEL_ID)
         print("READY")
 
     async def on_guild_join(self, guild):
