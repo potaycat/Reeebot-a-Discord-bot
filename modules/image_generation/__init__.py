@@ -5,7 +5,7 @@ from discord import File
 from base64 import b64decode
 from io import BytesIO
 import os
-from asyncio import sleep
+import asyncio
 from random import randint
 from .help_msg import *
 import discord
@@ -54,30 +54,30 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         prompt,
         try_prevent_nsfw: bool,
         easy_negative=True,
-        negative_prompt="",
+        negative_prompt: str = "",
         sampling_method: Choice[str] = None,
-        steps: int = 20,
-        cfg_scale: float = 7.5,
+        steps: int = None,
+        cfg_scale: float = None,
         seed: int = None,
     ):
         """
         Imagine a kemono furry
         """
-        await ctx.interaction.response.defer()
+        asyncio.create_task(ctx.interaction.response.defer())
         np = negative_prompt
         if easy_negative:
             if np:
                 np += ","
-            np += "(EasyNegative:1.0),(worst quality, low quality:1.4),bad anatomy,mutated,ugly hand,missing hand,extra arm,extra leg,extra hand,extra digit,fewer digits"
+            np += "(boring_e621:1.0),(EasyNegative:0.8),(deformityv6:0.8),(bad-image-v2:0.8),(worst quality, low quality:1.4),bad anatomy, bad hands, error, extra digit, fewer digits."
         if try_prevent_nsfw:
             if np:
                 np += ","
-            np += "nsfw,nude,naked,navel"
+            np += "nsfw,nude,naked,navel,genital"
         input_ = {
             "prompt": prompt,
             "negative_prompt": np,
-            "steps": steps,
-            "cfg_scale": cfg_scale,
+            "steps": steps or 20,
+            "cfg_scale": cfg_scale or 7.5,
             "sampler_index": "DPM++ 2M Karras"
             if sampling_method == None
             else sampling_method.value,
@@ -96,7 +96,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                     if x["status"] == "COMPLETED":
                         break
                     else:
-                        await sleep(0.1)
+                        await asyncio.sleep(0.1)
                 else:
                     raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
         else:
@@ -112,8 +112,31 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         btn.res_msg = r
         btn.del_btn_hanldr = (self.delete_generation, id_)
 
+        """ Log to channel """
         try:
-            await self.monitor(ctx, x, up, id_)
+            ks = ["seed"]
+            if negative_prompt:
+                ks.append("negative_prompt")
+            if sampling_method:
+                ks.append("sampler_index")
+            if steps:
+                ks.append("steps")
+            if cfg_scale:
+                ks.append("cfg_scale")
+            u_in = {k: x["output"]["parameters"][k] for k in ks}
+            if sampling_method:
+                u_in["sampling_method"] = u_in.pop("sampler_index")
+            u_in["try_prevent_nsfw"] = try_prevent_nsfw
+            u_in["easy_negative"] = easy_negative
+            d_ = {
+                "user": f"{ctx.author} ({ctx.author.id})",
+                "command": "imagine kemono",
+                "revision": "230402",
+                "input": str(u_in)[:1500],
+                "job_id": id_,
+                "output": "<" + up.attachments[0].url + ">",
+            }
+            await self.bot.low_log_channel.send(d_)
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
@@ -124,28 +147,6 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             "job_id": jid,
             "action": "delete",
             "reason": reason,
-        }
-        await self.bot.low_log_channel.send(d_)
-
-    async def monitor(self, ctx, res, reply, jid):
-        info = {
-            k: res["output"]["parameters"][k]
-            for k in [
-                "prompt",
-                "negative_prompt",
-                "steps",
-                "sampler_index",
-                "cfg_scale",
-                "seed",
-            ]
-        }
-        d_ = {
-            "user": f"{ctx.author} ({ctx.author.id})",
-            "command": "imagine kemono",
-            "revision": "230328_2",
-            "input": str(info)[:1500],
-            "job_id": jid,
-            "output": "<" + reply.attachments[0].url + ">",
         }
         await self.bot.low_log_channel.send(d_)
 
