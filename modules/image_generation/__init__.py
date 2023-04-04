@@ -114,7 +114,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
 
         """ Log to channel """
         try:
-            ks = ["seed"]
+            ks = ["prompt", "seed"]
             if negative_prompt:
                 ks.append("negative_prompt")
             if sampling_method:
@@ -130,8 +130,9 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             u_in["easy_negative"] = easy_negative
             d_ = {
                 "user": f"{ctx.author} ({ctx.author.id})",
+                "msg_url": "<" + ctx.message.jump_url + ">",
                 "command": "imagine kemono",
-                "revision": "230402",
+                "revision": "230404",
                 "input": str(u_in)[:1500],
                 "job_id": id_,
                 "output": "<" + up.attachments[0].url + ">",
