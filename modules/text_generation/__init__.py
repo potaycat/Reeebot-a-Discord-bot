@@ -1,6 +1,6 @@
 from discord.ext import commands
 from discord.app_commands import choices, Choice
-from utils import run_blocking, dict2embed, alt_thread
+from utils import alt_thread
 import os
 import discord
 import logging
@@ -37,7 +37,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
 
         async def ok():
             if i:
-                await i.response.send_message("`Recieved`", ephemeral=True)
+                await i.response.send_message("Recieved. Also try `rn.hey <message>`", ephemeral=True)
 
         try:
             for hook in await ctx.channel.webhooks():
@@ -84,7 +84,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             "asker": f"{ctx.author} ({ctx.author.id})",
             "msg_url": "<" + ctx.message.jump_url + ">",
             "command": "hey reon " + mode,
-            "revision": "230327",
+            "revision": "230415",
             "question": q[:200],
             "response": str(r_),
         }
@@ -94,7 +94,6 @@ class ChatCog(commands.Cog, name="5. I talk"):
     @choices(
         mode=[
             Choice(name="Maid", value="maid"),
-            Choice(name="Cat", value="cat"),
             Choice(name="Yours (Coming soon)", value="yours"),
         ]
     )
@@ -119,7 +118,11 @@ class ChatCog(commands.Cog, name="5. I talk"):
             self.chat_hist[cid] = []
         hist = self.chat_hist.get(cid, [])[-3:]
         user_in = {"role": "user", "content": message}
-        prompt = sona["starter"] + hist + [user_in]
+        append = [user_in]
+        if ref_msg := ctx.message.reference:
+            x = "assistant" if "reon" in ref_msg.author.name.lower() else "user"
+            append.insert(0, {"role": x, "content": ref_msg.content})
+        prompt = sona["starter"] + hist + append
 
         @alt_thread
         def ask():
@@ -137,9 +140,10 @@ class ChatCog(commands.Cog, name="5. I talk"):
 
         res = await ask()
         await self.reply(ctx, webhook, message, res.choices[0].message.content, sona)
-        if res.usage.prompt_tokens < sona["max_tokens"]:
-            hist.append(user_in)
-        hist.append(res.choices[0].message)
+        if res.usage.completion_tokens < 500:
+            hist += [user_in, res.choices[0].message]
+        else:
+            hist = [user_in, res.choices[0].message]
         self.chat_hist[cid] = hist
         try:
             await self.monitor(ctx, message, mode, res)
@@ -152,21 +156,12 @@ class ChatCog(commands.Cog, name="5. I talk"):
 
     @commands.command()
     async def hey_maid(self, ctx, *, q=""):
-        await self.hey(ctx, message=q, mode="maid")
-
-    @commands.command()
-    async def hey_cat(self, ctx, *, q=""):
-        await self.hey(ctx, message=q, mode="cat")
-
-    @commands.command()
-    async def hey_assistant(self, ctx, *, q=""):
-        await self.hey(ctx, message=q, mode="raw")
+        await self.hey(ctx, message=q, mode=Choice(name="Maid", value="maid"))
 
     @hey.command()
     @choices(
         default_mode=[
             Choice(name="Maid", value="maid"),
-            Choice(name="Cat", value="cat"),
             Choice(name="Fluffy", value="fluffy"),
         ]
     )
@@ -193,10 +188,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             user_dat["default_mode"] = default_mode.value
 
         await self.save_chat_data(uid, user_dat)
-        if i := ctx.interaction:
-            await i.response.send_message(user_dat, ephemeral=True)
-        else:
-            await ctx.send(user_dat)
+        await ctx.reply(user_dat)
 
 
 async def setup(bot):

@@ -13,11 +13,15 @@ class ChatSona:
         "starter": [
             {
                 "role": "system",
-                "content": """Take the role of a maid Umbreon named "Reon".""",
+                "content": """Take the role of a cute maid Umbreon named "Reon".""",
+            },
+            {
+                "role": "assistant",
+                "content": "How may I assist you master/misstress? <3",
             },
         ],
         "temperature": 0.4,
-        "max_tokens": 1000,
+        "max_tokens": 1500,
     }
     ASSIST = {
         "name": "Reon Assist Mode",
@@ -39,17 +43,13 @@ class ChatSona:
                 "role": "system",
                 "content": """Take the role of an anime cat named "Reon".""",
             },
-            {
-                "role": "assistant",
-                "content": "Nya~! I live between world and time. Just kidding I live in Chicago. Meow meow meow meow meow~~",
-            },
         ],
-        "temperature": 0.7,
-        "max_tokens": 200,
+        "temperature": 0.8,
+        "max_tokens": 50,
     }
     FLUFFY = {
         "name": "Reon Fluffy Mode",
-        "avatar_url": "https://cdn.discordapp.com/attachments/759021098468638733/1071955024336396348/e6b.jpg",
+        "avatar_url": "https://cdn.discordapp.com/attachments/759021098468638733/1096565944035311758/mnmbn.png",
         "starter": [
             {
                 "role": "system",
