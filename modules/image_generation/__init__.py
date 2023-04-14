@@ -12,7 +12,6 @@ import discord
 
 
 class ImageGen(commands.Cog, name="4. Image Generation"):
-    BASE_URL = "https://api.runpod.ai/v1/kle30f6hbm4f5i"
     HEADERS = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": f"Bearer {os.getenv('RUN_POD_API_KEY')}",
@@ -84,23 +83,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             "seed": seed or randint(1, 999999999),
         }
         body = {"input": input_}
-        x = await arequests("POST", self.BASE_URL + "/run", self.HEADERS, body)
-        if x.ok:
-            id_ = x.json()["id"]
-            while 1:
-                x = await arequests(
-                    "GET", self.BASE_URL + "/status/" + id_, self.HEADERS
-                )
-                if x.ok:
-                    x = x.json()
-                    if x["status"] == "COMPLETED":
-                        break
-                    else:
-                        await asyncio.sleep(0.1)
-                else:
-                    raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
-        else:
-            raise Exception(f"HTTP error: {x.status_code}")
+        x = await self.runpod("https://api.runpod.ai/v2/kle30f6hbm4f5i", body)
         up = await self.bot.img_dump_chnl.send(
             file=File(
                 BytesIO(b64decode(x["output"]["images"][0])),
@@ -110,8 +93,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         btn = ImgButtons()
         r = await ctx.reply(up.attachments[0].url, view=btn)
         btn.res_msg = r
-        btn.del_btn_hanldr = (self.delete_generation, id_)
-
+        btn.del_btn_hanldr = (self.delete_generation, x["id"])
         """ Log to channel """
         try:
             ks = ["prompt", "seed"]
@@ -128,18 +110,95 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                 u_in["sampling_method"] = u_in.pop("sampler_index")
             u_in["try_prevent_nsfw"] = try_prevent_nsfw
             u_in["easy_negative"] = easy_negative
-            d_ = {
-                "user": f"{ctx.author} ({ctx.author.id})",
-                "msg_url": "<" + ctx.message.jump_url + ">",
-                "command": "imagine kemono",
-                "revision": "230404",
-                "input": str(u_in)[:1500],
-                "job_id": id_,
-                "output": "<" + up.attachments[0].url + ">",
-            }
-            await self.bot.low_log_channel.send(d_)
+            await self.log(
+                ctx, str(u_in)[:1500], x["id"], up, "imagine kemono", "230404"
+            )
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
+
+    @imagine.command()
+    @choices(
+        spiecies=[
+            Choice(name="Lucario", value="LucarioLoRA.safetensors"),
+            Choice(name="Meowscarada", value="MeowscaradaLoRA.safetensors"),
+            Choice(name="Braixen", value="BraixenLoRA.safetensors"),
+        ]
+    )
+    async def pokemon(
+        self,
+        ctx,
+        spiecies: Choice[str],
+        prompt,
+        lora_weight: float = None,
+        safety_check=True,
+        easy_negative=True,
+        negative_prompt: str = "",
+        steps: int = None,
+        cfg_scale: float = None,
+        seed: int = None,
+    ):
+        """
+        Imagine a Pokemon
+        """
+        asyncio.create_task(ctx.interaction.response.defer())
+        np = negative_prompt
+        if easy_negative:
+            if np:
+                np += ","
+            np += "easynegative, low quality, bad quality, normal quality, error, jpeg artifacts, mutant, mutation, ugly, deformed, watermark logo, signed, nsfw"
+        input_ = {
+            "lora": spiecies.value,
+            "lora_weight": lora_weight or 0.8,
+            "prompt": prompt,
+            "negative_prompt": np,
+            "steps": steps or 70,
+            "cfg_scale": cfg_scale or 7.0,
+            "seed": seed or randint(1, 999999999),
+            "safety_check": safety_check,
+        }
+        body = {"input": input_}
+        x = await self.runpod("https://api.runpod.ai/v2/ebuz1knogyus6p", body)
+        up = await self.bot.img_dump_chnl.send(
+            file=File(
+                BytesIO(b64decode(x["output"]["output"])),
+                filename="generated.png",
+            )
+        )
+        btn = ImgButtons()
+        r = await ctx.reply(up.attachments[0].url, view=btn)
+        btn.res_msg = r
+        btn.del_btn_hanldr = (self.delete_generation, x["id"])
+        """ Log to channel """
+        try:
+            ks = ["lora", "prompt", "seed"]
+            if negative_prompt:
+                ks.append("negative_prompt")
+            if steps:
+                ks.append("steps")
+            if cfg_scale:
+                ks.append("cfg_scale")
+            if lora_weight:
+                ks.append("lora_weight")
+            u_in = {k: x["output"]["input"][k] for k in ks}
+            u_in["easy_negative"] = easy_negative
+            u_in["safety_check"] = safety_check
+            await self.log(
+                ctx, u_in, x["id"], up, "imagine pokemon", "230415"
+            )
+        except Exception as e:
+            await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
+
+    async def log(self, ctx, input_, id_, up, command, revision):
+        d_ = {
+            "user": f"{ctx.author} ({ctx.author.id})",
+            "msg_url": "<" + ctx.message.jump_url + ">",
+            "command": command,
+            "revision": revision,
+            "input": input_,
+            "job_id": id_,
+            "output": "<" + up.attachments[0].url + ">",
+        }
+        await self.bot.low_log_channel.send(d_)
 
     async def delete_generation(self, msg, interaction, jid, reason=None):
         await msg.delete()
@@ -151,21 +210,23 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         }
         await self.bot.low_log_channel.send(d_)
 
-    @imagine.command()
-    @choices(model=[Choice(name="Kemono", value="kemono")])
-    async def info(self, ctx, model, eph=True):
-        """
-        Model info
-        """
-        match model:
-            case "kemono":
-                help_msg = KEM_HELP
-            case _:
-                help_msg = "kemono, "
-        if ctx.interaction:
-            await ctx.interaction.response.send_message(help_msg, ephemeral=eph)
+    async def runpod(self, url, body):
+        x = await arequests("POST", url + "/run", self.HEADERS, body)
+        if x.ok:
+            id_ = x.json()["id"]
+            while 1:
+                x = await arequests("GET", url + "/status/" + id_, self.HEADERS)
+                if x.ok:
+                    x = x.json()
+                    if x["status"] == "COMPLETED":
+                        break
+                    else:
+                        await asyncio.sleep(0.1)
+                else:
+                    raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
         else:
-            await ctx.send(help_msg)
+            raise Exception(f"HTTP error: {x.status_code}")
+        return x
 
 
 class ImgButtons(discord.ui.View):
