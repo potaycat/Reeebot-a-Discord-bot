@@ -145,11 +145,11 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         if easy_negative:
             if np:
                 np += ","
-            np += "easynegative, low quality, bad quality, normal quality, error, jpeg artifacts, mutant, mutation, ugly, deformed, watermark logo, signed, nsfw"
+            np += "easynegative, bad_prompt, normal quality, bad quality"
         input_ = {
             "lora": spiecies.value,
             "lora_weight": lora_weight or 0.8,
-            "prompt": prompt,
+            "prompt": f"{spiecies.name.lower()}, {prompt}",
             "negative_prompt": np,
             "steps": steps or 70,
             "cfg_scale": cfg_scale or 7.0,
@@ -181,10 +181,8 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                 ks.append("lora_weight")
             u_in = {k: x["output"]["input"][k] for k in ks}
             u_in["easy_negative"] = easy_negative
-            u_in["safety_check"] = safety_check
-            await self.log(
-                ctx, u_in, x["id"], up, "imagine pokemon", "230415"
-            )
+            u_in["nsfw_detected"] = x["output"]["nsfw_content_detected"]
+            await self.log(ctx, u_in, x["id"], up, "imagine pokemon", "230415")
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
