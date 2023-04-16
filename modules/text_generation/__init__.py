@@ -84,7 +84,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             "asker": f"{ctx.author} ({ctx.author.id})",
             "msg_url": "<" + ctx.message.jump_url + ">",
             "command": "hey reon " + mode,
-            "revision": "230415",
+            "revision": "230416",
             "question": q[:200],
             "response": str(r_),
         }
@@ -120,8 +120,8 @@ class ChatCog(commands.Cog, name="5. I talk"):
         user_in = {"role": "user", "content": message}
         append = [user_in]
         if ref_msg := ctx.message.reference:
-            x = "assistant" if "reon" in ref_msg.author.name.lower() else "user"
-            append.insert(0, {"role": x, "content": ref_msg.content})
+            x = "assistant" if "reon" in ref_msg.resolved.author.name.lower() else "user"
+            append.insert(0, {"role": x, "content": ref_msg.resolved.content})
         prompt = sona["starter"] + hist + append
 
         @alt_thread
@@ -140,7 +140,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
 
         res = await ask()
         await self.reply(ctx, webhook, message, res.choices[0].message.content, sona)
-        if res.usage.completion_tokens < 500:
+        if res.usage.completion_tokens < 350:
             hist += [user_in, res.choices[0].message]
         else:
             hist = [user_in, res.choices[0].message]
