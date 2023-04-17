@@ -129,10 +129,10 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         ctx,
         spiecies: Choice[str],
         prompt,
-        lora_weight: float = None,
         safety_check=True,
         easy_negative=True,
         negative_prompt: str = "",
+        lora_weight: float = None,
         steps: int = None,
         cfg_scale: float = None,
         seed: int = None,
@@ -145,13 +145,13 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         if easy_negative:
             if np:
                 np += ","
-            np += "easynegative, bad_prompt, normal quality, bad quality"
+            np += "easynegative,bad_prompt,normal quality,bad quality,deformed"
         input_ = {
             "lora": spiecies.value,
             "lora_weight": lora_weight or 0.8,
             "prompt": f"{spiecies.name.lower()}, {prompt}",
             "negative_prompt": np,
-            "steps": steps or 70,
+            "steps": steps or 50,
             "cfg_scale": cfg_scale or 7.0,
             "seed": seed or randint(1, 999999999),
             "safety_check": safety_check,
@@ -182,7 +182,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             u_in = {k: x["output"]["input"][k] for k in ks}
             u_in["easy_negative"] = easy_negative
             u_in["nsfw_detected"] = x["output"]["nsfw_content_detected"]
-            await self.log(ctx, u_in, x["id"], up, "imagine pokemon", "230415")
+            await self.log(ctx, u_in, x["id"], up, "imagine pokemon", "230417")
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 

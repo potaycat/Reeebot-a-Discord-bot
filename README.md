@@ -8,3 +8,7 @@ A Discord bot named *Reeebot*
 - pixiv search
 - run python snippets
 - Some other things
+
+
+### Deployment:
+https://github.com/potaycat/reeebot-deploy
