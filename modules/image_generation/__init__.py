@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord.app_commands import command, choices, Choice
+from discord import app_commands
 from utils import arequests
 from discord import File
 from base64 import b64decode
@@ -21,9 +21,9 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         self.bot = bot
 
     @commands.hybrid_group(fallback="kemono")
-    @choices(
+    @app_commands.choices(
         sampling_method=[
-            Choice(name=x, value=x)
+            app_commands.Choice(name=x, value=x)
             for x in [
                 "Euler a",
                 "Euler",
@@ -54,8 +54,8 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         try_prevent_nsfw: bool,
         easy_negative=True,
         negative_prompt: str = "",
-        sampling_method: Choice[str] = None,
-        steps: int = None,
+        sampling_method: app_commands.Choice[str] = None,
+        steps: app_commands.Range[int, 1, 200] = None,
         cfg_scale: float = None,
         seed: int = None,
     ):
@@ -117,23 +117,25 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
     @imagine.command()
-    @choices(
+    @app_commands.choices(
         spiecies=[
-            Choice(name="Lucario", value="LucarioLoRA.safetensors"),
-            Choice(name="Meowscarada", value="MeowscaradaLoRA.safetensors"),
-            Choice(name="Braixen", value="BraixenLoRA.safetensors"),
+            app_commands.Choice(name="Lucario", value="LucarioLoRA.safetensors"),
+            app_commands.Choice(
+                name="Meowscarada", value="MeowscaradaLoRA.safetensors"
+            ),
+            app_commands.Choice(name="Braixen", value="BraixenLoRA.safetensors"),
         ]
     )
     async def pokemon(
         self,
         ctx,
-        spiecies: Choice[str],
+        spiecies: app_commands.Choice[str],
         prompt,
         safety_check=True,
         easy_negative=True,
         negative_prompt: str = "",
         lora_weight: float = None,
-        steps: int = None,
+        steps: app_commands.Range[int, 1, 200] = None,
         cfg_scale: float = None,
         seed: int = None,
     ):
