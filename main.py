@@ -54,6 +54,9 @@ class Reeebot(Bot):
     async def on_guild_join(self, guild):
         await self.log_channel.send(f"Joined {guild}")
 
+    async def on_guild_leave(self, guild):
+        await self.log_channel.send(f"Left {guild}")
+
     async def on_command_error(self, ctx, error):
         await ctx.send(f"```{error}```")
         await self.low_log_channel.send(f"```{error}``` {ctx.message.jump_url}")

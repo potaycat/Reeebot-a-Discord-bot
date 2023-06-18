@@ -121,9 +121,14 @@ class Buttons(discord.ui.View):
         style=discord.ButtonStyle.gray,
     )
     async def retry(self, interaction, button):
-        result = await self.execute(interaction)
-        await interaction.response.edit_message(
-            content=f"{format_result(result)}<@{interaction.user.id}>` reran ({self.count})`"
+        result, _, _ = await asyncio.gather(
+            self.execute(interaction),
+            interaction.response.defer(),
+            self.res_msg.edit(content="`Running...`", view=None),
+        )
+        await self.res_msg.edit(
+            content=f"{format_result(result)}<@{interaction.user.id}>` reran ({self.count})`",
+            view=self,
         )
         self.count += 1
 
