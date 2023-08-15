@@ -22,7 +22,7 @@ class RCE(commands.Cog, name="4. Pythonista"):
         self.TIME_OUT = 600
 
     def preprocess(self, s):
-        if s.startswith(p := f"{PREFIX}run"):
+        if s.startswith((p := f"{PREFIX}run", p.capitalize())):
             s = s[p.__len__() :].strip()
         if s.startswith("```"):
             s = s[3:-3]

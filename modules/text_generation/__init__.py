@@ -84,7 +84,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             "asker": f"{ctx.author} ({ctx.author.id})",
             "msg_url": "<" + ctx.message.jump_url + ">",
             "command": "hey reon " + mode,
-            "revision": "230416",
+            "revision": "230815",
             "question": q[:200],
             "response": str(r_),
         }
@@ -117,7 +117,7 @@ class ChatCog(commands.Cog, name="5. I talk"):
             self.chat_mode[cid] = mode
             self.chat_hist[cid] = []
         hist = self.chat_hist.get(cid, [])[-3:]
-        user_in = {"role": "user", "content": message}
+        user_in = {"role": "user", "content": f"{ctx.author.display_name}: {message}"}
         append = [user_in]
         if ref_msg := ctx.message.reference:
             x = "assistant" if "reon" in ref_msg.resolved.author.name.lower() else "user"

@@ -124,6 +124,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                 name="Meowscarada", value="MeowscaradaLoRA.safetensors"
             ),
             app_commands.Choice(name="Braixen", value="BraixenLoRA.safetensors"),
+            app_commands.Choice(name="Eeveelution", value="EeveeLoRA.safetensors"),
         ]
     )
     async def pokemon(
@@ -147,7 +148,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         if easy_negative:
             if np:
                 np += ","
-            np += "easynegative,bad_prompt,normal quality,bad quality,deformed"
+            np += "easynegative,bad_prompt,normal quality,bad quality,deformed,amputee,boring_e621"
         input_ = {
             "lora": spiecies.value,
             "lora_weight": lora_weight or 0.8,
@@ -184,7 +185,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             u_in = {k: x["output"]["input"][k] for k in ks}
             u_in["easy_negative"] = easy_negative
             u_in["nsfw_detected"] = x["output"]["nsfw_content_detected"]
-            await self.log(ctx, u_in, x["id"], up, "imagine pokemon", "230417")
+            await self.log(ctx, u_in, x["id"], up, "imagine pokemon", "230815")
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 

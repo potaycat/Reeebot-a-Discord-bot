@@ -21,7 +21,7 @@ class Reeebot(Bot):
         intents.members = True
         intents.message_content = True
         super().__init__(
-            command_prefix=[PREFIX, PREFIX.title()],
+            command_prefix=[PREFIX, PREFIX.capitalize()],
             intents=intents,
             help_command=MyHelpCommand(),
             case_insensitive=True,
@@ -42,8 +42,8 @@ class Reeebot(Bot):
         for ext in self.startup_extensions:
             await self.load_extension(ext)
             print("Loaded:", ext)
-        c = await self.tree.sync(guild=None)
-        print("Synced", c.__len__(), "commands")
+        # c = await self.tree.sync(guild=None)
+        # print("Synced", c.__len__(), "commands")
 
     async def on_ready(self):
         self.log_channel = self.get_channel(LOGGING_CHANNEL_ID)
