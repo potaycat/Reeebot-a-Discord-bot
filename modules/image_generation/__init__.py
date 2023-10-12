@@ -221,7 +221,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                     x = x.json()
                     if x["status"] == "COMPLETED":
                         break
-                    else:
+                    if x["status"] == "IN_QUEUE":
                         await asyncio.sleep(0.1)
                 else:
                     raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
