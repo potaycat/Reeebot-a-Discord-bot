@@ -1,14 +1,14 @@
 from discord.ext import commands
 from discord import app_commands
 from utils import arequests
-from discord import File
+from discord import File, Attachment
 from base64 import b64decode
 from io import BytesIO
 import os
 import asyncio
 from random import randint
-from .help_msg import *
 import discord
+import json
 
 
 class ImageGen(commands.Cog, name="4. Image Generation"):
@@ -16,6 +16,11 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": f"Bearer {os.getenv('RUN_POD_API_KEY')}",
     }
+    with open(
+        "./modules/image_generation/runpod-api/sd-comfy-pokemon/workflow_api.json",
+        "r",
+    ) as f:
+        COMFY_PROMPT = f.read()
 
     def __init__(self, bot):
         self.bot = bot
@@ -111,81 +116,97 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             u_in["try_prevent_nsfw"] = try_prevent_nsfw
             u_in["easy_negative"] = easy_negative
             await self.log(
-                ctx, str(u_in)[:1500], x["id"], up, "imagine kemono", "230404"
+                ctx,
+                str(u_in)[:1500],
+                x["id"],
+                up.attachments[0].url,
+                "imagine kemono",
+                "230404",
             )
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
-    @imagine.command()
+    @commands.hybrid_group(fallback="pokemon")
     @app_commands.choices(
         spiecies=[
-            app_commands.Choice(name="Lucario", value="LucarioLoRA.safetensors"),
+            app_commands.Choice(name="Lucario", value="LucarioV1.safetensors"),
+            app_commands.Choice(name="Litten", value="litten-08.safetensors"),
             app_commands.Choice(
-                name="Meowscarada", value="MeowscaradaLoRA.safetensors"
+                name="Floragato", value="floragato-v1-locon.safetensors"
             ),
-            app_commands.Choice(name="Braixen", value="BraixenLoRA.safetensors"),
-            app_commands.Choice(name="Eeveelution", value="EeveeLoRA.safetensors"),
+            app_commands.Choice(name="Umbreon", value="Umbreon_LoRA_V2.safetensors"),
         ]
     )
-    async def pokemon(
+    async def colorize(
         self,
         ctx,
+        sketch: Attachment,
         spiecies: app_commands.Choice[str],
-        prompt,
-        safety_check=True,
-        easy_negative=True,
-        negative_prompt: str = "",
-        lora_weight: float = None,
-        steps: app_commands.Range[int, 1, 200] = None,
-        cfg_scale: float = None,
+        prompt="",
+        dark=False,
+        negative_prompt="",
+        auto_prompt=True,
         seed: int = None,
     ):
         """
-        Imagine a Pokemon
+        Colorize a Pokemon sketch
         """
-        asyncio.create_task(ctx.interaction.response.defer())
-        np = negative_prompt
-        if easy_negative:
-            if np:
-                np += ","
-            np += "easynegative,bad_prompt,normal quality,bad quality,deformed,amputee,boring_e621"
-        input_ = {
-            "lora": spiecies.value,
-            "lora_weight": lora_weight or 0.8,
-            "prompt": f"{spiecies.name.lower()}, {prompt}",
-            "negative_prompt": np,
-            "steps": steps or 50,
-            "cfg_scale": cfg_scale or 7.0,
-            "seed": seed or randint(1, 999999999),
-            "safety_check": safety_check,
-        }
-        body = {"input": input_}
-        x = await self.runpod("https://api.runpod.ai/v2/ebuz1knogyus6p", body)
-        up = await self.bot.img_dump_chnl.send(
-            file=File(
-                BytesIO(b64decode(x["output"]["output"])),
-                filename="generated.png",
-            )
+        await ctx.interaction.response.defer()
+        img_name = sketch.url.split("/")[-1].split("?")[0]
+        seed = seed or randint(1, 999999999999999)
+        if auto_prompt:
+            if prompt:
+                prompt = ", " + prompt
+            if negative_prompt:
+                negative_prompt = ", " + negative_prompt
+            prompt = f"{spiecies.name.lower()}, feral, pokemon, cute{prompt}"
+            negative_prompt = f"low quality, bad anatomy, deformity{negative_prompt}"
+
+        json_text = self.COMFY_PROMPT
+        json_text = (
+            json_text.replace("<STR IMAGE FILE>", img_name)
+            .replace('"<INT SEED>"', str(seed))
+            .replace('"<INT LATENT BATCH>"', "4")
+            .replace("<STR NEGATIVE>", negative_prompt)
+            .replace("<STR POSITIVE>", prompt)
+            .replace("<STR LORA NAME>", spiecies.value)
+            .replace("<VAEEncode input ind>", "25" if dark else "21")
         )
+        input_ = json.loads(json_text)
+        input_["img_url"] = sketch.url
+        body = {"input": input_}
+        x = await self.runpod("https://api.runpod.ai/v2/69xjmjth10zw7e", body)
+        up_img = [
+            File(BytesIO(b64decode(img[2:])), filename=f"{i}.png")
+            for i, img in enumerate(x["output"]["outputs"])
+        ]
+        up = await self.bot.img_dump_chnl.send(files=up_img)
         btn = ImgButtons()
-        r = await ctx.reply(up.attachments[0].url, view=btn)
+        r = await ctx.reply(
+            f"Colored from sketch: [link]({sketch.url})",
+            embeds=[
+                discord.Embed(url="https://umbrecore.com/?r=d_e").set_image(
+                    url=attch.url
+                )
+                for attch in up.attachments
+            ],
+            view=btn,
+        )
         btn.res_msg = r
         btn.del_btn_hanldr = (self.delete_generation, x["id"])
         """ Log to channel """
         try:
-            ks = ["lora", "prompt", "seed"]
-            if negative_prompt:
-                ks.append("negative_prompt")
-            if steps:
-                ks.append("steps")
-            if cfg_scale:
-                ks.append("cfg_scale")
-            if lora_weight:
-                ks.append("lora_weight")
-            u_in = {k: x["output"]["input"][k] for k in ks}
-            u_in["easy_negative"] = easy_negative
-            u_in["nsfw_detected"] = x["output"]["nsfw_content_detected"]
-            await self.log(ctx, u_in, x["id"], up, "imagine pokemon", "230815")
+            u_in = {
+                "sketch": sketch.url,
+                "spiecies": spiecies.name,
+                "prompt": prompt,
+                "dark_latent": dark,
+                "negative_prompt": negative_prompt,
+                "seed": seed,
+            }
+            await self.log(
+                ctx, u_in, x["id"], up.jump_url, "colorize pokemon", "231012"
+            )
         except Exception as e:
             await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
@@ -197,7 +218,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             "revision": revision,
             "input": input_,
             "job_id": id_,
-            "output": "<" + up.attachments[0].url + ">",
+            "output": "<" + up + ">",
         }
         await self.bot.low_log_channel.send(d_)
 
@@ -215,13 +236,16 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         x = await arequests("POST", url + "/run", self.HEADERS, body)
         if x.ok:
             id_ = x.json()["id"]
+            print(id_)
             while 1:
                 x = await arequests("GET", url + "/status/" + id_, self.HEADERS)
                 if x.ok:
                     x = x.json()
                     if x["status"] == "COMPLETED":
                         break
-                    if x["status"] == "IN_QUEUE":
+                    elif x["status"] == "FAILED":
+                        raise Exception(f"Runpod failure. Job ID: {id_}")
+                    else:
                         await asyncio.sleep(0.1)
                 else:
                     raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")

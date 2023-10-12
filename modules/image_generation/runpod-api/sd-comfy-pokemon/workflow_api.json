@@ -1,0 +1,212 @@
+{
+  "1": {
+    "inputs": {
+      "seed": "<INT SEED>",
+      "steps": 20,
+      "cfg": 7,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "30",
+        0
+      ],
+      "positive": [
+        "10",
+        0
+      ],
+      "negative": [
+        "10",
+        1
+      ],
+      "latent_image": [
+        "35",
+        0
+      ]
+    },
+    "class_type": "KSampler"
+  },
+  "2": {
+    "inputs": {
+      "ckpt_name": "yiffymix_v34.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "5": {
+    "inputs": {
+      "text": "<STR NEGATIVE>",
+      "clip": [
+        "30",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "6": {
+    "inputs": {
+      "samples": [
+        "1",
+        0
+      ],
+      "vae": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "7": {
+    "inputs": {
+      "image": "<STR IMAGE FILE>",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "8": {
+    "inputs": {
+      "filename_prefix": "comfyui-clora-canny",
+      "images": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "9": {
+    "inputs": {
+      "control_net_name": "control_v11p_sd15s2_lineart_anime.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "10": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "29",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "control_net": [
+        "9",
+        0
+      ],
+      "image": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced"
+  },
+  "11": {
+    "inputs": {
+      "pixels": [
+        "<VAEEncode input ind>",
+        0
+      ],
+      "vae": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "VAEEncode"
+  },
+  "21": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 0.5,
+      "image": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels"
+  },
+  "25": {
+    "inputs": {
+      "image": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "ImageInvert"
+  },
+  "29": {
+    "inputs": {
+      "text": "<STR POSITIVE>",
+      "clip": [
+        "30",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "30": {
+    "inputs": {
+      "lora_name": "<STR LORA NAME>",
+      "strength_model": 0.6,
+      "strength_clip": 0.6000000000000001,
+      "model": [
+        "36",
+        0
+      ],
+      "clip": [
+        "36",
+        1
+      ]
+    },
+    "class_type": "LoraLoader"
+  },
+  "35": {
+    "inputs": {
+      "amount": "<INT LATENT BATCH>",
+      "samples": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "RepeatLatentBatch"
+  },
+  "36": {
+    "inputs": {
+      "lora_name": "FurryCoreV2New-07.safetensors",
+      "strength_model": 0.4,
+      "strength_clip": 0.3,
+      "model": [
+        "45",
+        0
+      ],
+      "clip": [
+        "45",
+        1
+      ]
+    },
+    "class_type": "LoraLoader"
+  },
+  "42": {
+    "inputs": {
+      "vae_name": "kl-f8-anime2.vae.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "45": {
+    "inputs": {
+      "lora_name": "Y1-Furry-Eeveelution.safetensors",
+      "strength_model": 0.3,
+      "strength_clip": 0.4,
+      "model": [
+        "2",
+        0
+      ],
+      "clip": [
+        "2",
+        1
+      ]
+    },
+    "class_type": "LoraLoader"
+  }
+}
