@@ -44,7 +44,7 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
         )
         await ctx.send(file=File(x))
 
-    @quick.command()
+    # @quick.command()
     async def remove_background(
         self, ctx, avatar: Optional[User], upload: Optional[Attachment], img_link=""
     ):

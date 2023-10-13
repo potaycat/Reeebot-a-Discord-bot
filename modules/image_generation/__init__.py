@@ -163,14 +163,14 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             negative_prompt = f"low quality, bad anatomy, deformity{negative_prompt}"
 
         json_text = self.COMFY_PROMPT
-        json_text = (
-            json_text.replace("<STR IMAGE FILE>", img_name)
-            .replace('"<INT SEED>"', str(seed))
-            .replace('"<INT LATENT BATCH>"', "4")
-            .replace("<STR NEGATIVE>", negative_prompt)
-            .replace("<STR POSITIVE>", prompt)
-            .replace("<STR LORA NAME>", spiecies.value)
-            .replace("<VAEEncode input ind>", "25" if dark else "21")
+        json_text = ( # replace 1st occurrence
+            json_text.replace("<STR IMAGE FILE>", img_name, 1)
+            .replace('"<INT SEED>"', str(seed), 1)
+            .replace('"<INT LATENT BATCH>"', "4", 1)
+            .replace("<STR NEGATIVE>", negative_prompt, 1)
+            .replace("<STR POSITIVE>", prompt, 1)
+            .replace("<STR LORA NAME>", spiecies.value, 1)
+            .replace("<VAEEncode input ind>", "25" if dark else "21", 1)
         )
         input_ = json.loads(json_text)
         input_["img_url"] = sketch.url
@@ -246,7 +246,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                     elif x["status"] == "FAILED":
                         raise Exception(f"Runpod failure. Job ID: {id_}")
                     else:
-                        await asyncio.sleep(0.1)
+                        await asyncio.sleep(0.2)
                 else:
                     raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
         else:
