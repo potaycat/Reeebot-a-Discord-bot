@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from discord import Embed
@@ -31,12 +33,19 @@ def alt_thread(fun):
 
 @alt_thread
 def arequests(method, url, headers=None, body=None):
-    match method.lower():
-        case "get":
-            fun = requests.get
-        case "post":
-            fun = requests.post
-    return fun(url, headers=headers, json=body)
+    with requests.Session() as s:
+        s.mount(
+            "https://",
+            HTTPAdapter(
+                max_retries=Retry(connect=3, backoff_factor=0.5),
+            ),
+        )
+        match method.lower():
+            case "get":
+                fun = s.get
+            case "post":
+                fun = s.post
+        return fun(url, headers=headers, json=body)
 
 
 class ImageOpener:
