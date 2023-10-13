@@ -246,7 +246,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
                     elif x["status"] == "FAILED":
                         raise Exception(f"Runpod failure. Job ID: {id_}")
                     else:
-                        await asyncio.sleep(0.2)
+                        await asyncio.sleep(0.1)
                 else:
                     raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
         else:
