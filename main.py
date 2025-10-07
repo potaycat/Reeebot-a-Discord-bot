@@ -32,7 +32,7 @@ class Reeebot(Bot):
             "modules.web_scraper",
             "modules.image_manip",
             "modules.image_generation",
-            "modules.text_generation",
+            # "modules.text_generation",
         ]
         self.OWNER_ID = OWNER_ID
         self.PREFIX = PREFIX
@@ -49,6 +49,7 @@ class Reeebot(Bot):
         self.log_channel = self.get_channel(LOGGING_CHANNEL_ID)
         self.low_log_channel = self.get_channel(LOW_LOGGING_CHANNEL_ID)
         self.img_dump_chnl = self.get_channel(IMG_DUMP_CHANNEL_ID)
+        print(IMG_DUMP_CHANNEL_ID, self.img_dump_chnl)
         print("READY")
 
     async def on_guild_join(self, guild):

@@ -9,46 +9,39 @@ import asyncio
 from random import randint
 import discord
 import json
+import aiohttp
+from typing import Optional
 
 
 class ImageGen(commands.Cog, name="4. Image Generation"):
-    HEADERS = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": f"Bearer {os.getenv('RUN_POD_API_KEY')}",
-    }
-    with open(
-        "./modules/image_generation/runpod-api/sd-comfy-pokemon/workflow_api.json",
-        "r",
-    ) as f:
-        COMFY_PROMPT = f.read()
 
     def __init__(self, bot):
+        self.HEADERS = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": f"Bearer {os.getenv('RUN_POD_API_KEY')}",
+        }
+        with open(
+            "./modules/image_generation/runpod-api/comfyui-noobai-wf.json",
+            "r",
+        ) as f:
+            self.comfyuinoobaiwf = f.read()
         self.bot = bot
+        self.session = aiohttp.ClientSession()
 
-    @commands.hybrid_group(fallback="kemono")
+    async def cog_unload(self):
+        if self.session:
+            await self.session.close()
+
+    @commands.hybrid_command()
     @app_commands.choices(
-        sampling_method=[
+        output_count=[
             app_commands.Choice(name=x, value=x)
             for x in [
-                "Euler a",
-                "Euler",
-                "LMS",
-                "Heun",
-                "DPM2",
-                "DPM2 a",
-                "DPM++ 2S a",
-                "DPM++ 2M",
-                "DPM++ SDE",
-                "DPM fast",
-                "DPM adaptive",
-                "LMS Karras",
-                "DPM2 Karras",
-                "DPM2 a Karras",
-                "DPM++ 2S a Karras",
-                "DPM++ 2M Karras",
-                "DPM++ SDE Karras",
-                "DDIM",
-                "PLMS",
+                "1",
+                "2",
+                "4",
+                "6",
+                "9",
             ]
         ]
     )
@@ -56,159 +49,112 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         self,
         ctx,
         prompt,
-        try_prevent_nsfw: bool,
-        easy_negative=True,
         negative_prompt: str = "",
-        sampling_method: app_commands.Choice[str] = None,
-        steps: app_commands.Range[int, 1, 200] = None,
-        cfg_scale: float = None,
-        seed: int = None,
+        output_count: app_commands.Choice[str] = "2",
+        seed: int = randint(1, 999999999999999),
     ):
         """
-        Imagine a kemono furry
+        Uses NoobAI for image generation
         """
         asyncio.create_task(ctx.interaction.response.defer())
-        np = negative_prompt
-        if easy_negative:
-            if np:
-                np += ","
-            np += "(boring_e621:1.0),(EasyNegative:0.8),(deformityv6:0.8),(bad-image-v2:0.8),(worst quality, low quality:1.4),bad anatomy, bad hands, error, extra digit, fewer digits."
-        if try_prevent_nsfw:
-            if np:
-                np += ","
-            np += "nsfw,nude,naked,navel,genital"
-        input_ = {
-            "prompt": prompt,
-            "negative_prompt": np,
-            "steps": steps or 20,
-            "cfg_scale": cfg_scale or 7.5,
-            "sampler_index": "DPM++ 2M Karras"
-            if sampling_method == None
-            else sampling_method.value,
-            "seed": seed or randint(1, 999999999),
-        }
-        body = {"input": input_}
-        x = await self.runpod("https://api.runpod.ai/v2/kle30f6hbm4f5i", body)
-        up = await self.bot.img_dump_chnl.send(
-            file=File(
-                BytesIO(b64decode(x["output"]["images"][0])),
-                filename="generated.png",
-            )
-        )
-        btn = ImgButtons()
-        r = await ctx.reply(up.attachments[0].url, view=btn)
-        btn.res_msg = r
-        btn.del_btn_hanldr = (self.delete_generation, x["id"])
-        """ Log to channel """
-        try:
-            ks = ["prompt", "seed"]
-            if negative_prompt:
-                ks.append("negative_prompt")
-            if sampling_method:
-                ks.append("sampler_index")
-            if steps:
-                ks.append("steps")
-            if cfg_scale:
-                ks.append("cfg_scale")
-            u_in = {k: x["output"]["parameters"][k] for k in ks}
-            if sampling_method:
-                u_in["sampling_method"] = u_in.pop("sampler_index")
-            u_in["try_prevent_nsfw"] = try_prevent_nsfw
-            u_in["easy_negative"] = easy_negative
-            await self.log(
-                ctx,
-                str(u_in)[:1500],
-                x["id"],
-                up.attachments[0].url,
-                "imagine kemono",
-                "230404",
-            )
-        except Exception as e:
-            await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
 
-    @commands.hybrid_group(fallback="pokemon")
-    @app_commands.choices(
-        spiecies=[
-            app_commands.Choice(name="Lucario", value="LucarioV1.safetensors"),
-            app_commands.Choice(name="Litten", value="litten-08.safetensors"),
-            app_commands.Choice(
-                name="Floragato", value="floragato-v1-locon.safetensors"
-            ),
-            app_commands.Choice(name="Umbreon", value="Umbreon_LoRA_V2.safetensors"),
-        ]
-    )
-    async def colorize(
-        self,
-        ctx,
-        sketch: Attachment,
-        spiecies: app_commands.Choice[str],
-        prompt="",
-        dark=False,
-        negative_prompt="",
-        auto_prompt=True,
-        seed: int = None,
-    ):
-        """
-        Colorize a Pokemon sketch
-        """
-        await ctx.interaction.response.defer()
-        img_name = sketch.url.split("/")[-1].split("?")[0]
-        seed = seed or randint(1, 999999999999999)
-        if auto_prompt:
-            if prompt:
-                prompt = ", " + prompt
-            if negative_prompt:
-                negative_prompt = ", " + negative_prompt
-            prompt = f"{spiecies.name.lower()}, feral, pokemon, cute{prompt}"
-            negative_prompt = f"low quality, bad anatomy, deformity{negative_prompt}"
-
-        json_text = self.COMFY_PROMPT
-        json_text = ( # replace 1st occurrence
-            json_text.replace("<STR IMAGE FILE>", img_name, 1)
-            .replace('"<INT SEED>"', str(seed), 1)
-            .replace('"<INT LATENT BATCH>"', "4", 1)
+        json_text = self.comfyuinoobaiwf
+        json_text = (  # replace 1st occurrence
+            json_text.replace("<INT SEED>", str(seed), 1)
+            .replace("<INT OUTPUT_NUM>", output_count, 1)
             .replace("<STR NEGATIVE>", negative_prompt, 1)
             .replace("<STR POSITIVE>", prompt, 1)
-            .replace("<STR LORA NAME>", spiecies.value, 1)
-            .replace("<VAEEncode input ind>", "25" if dark else "21", 1)
         )
         input_ = json.loads(json_text)
-        input_["img_url"] = sketch.url
-        body = {"input": input_}
-        x = await self.runpod("https://api.runpod.ai/v2/69xjmjth10zw7e", body)
-        up_img = [
-            File(BytesIO(b64decode(img[2:])), filename=f"{i}.png")
-            for i, img in enumerate(x["output"]["outputs"])
-        ]
-        up = await self.bot.img_dump_chnl.send(files=up_img)
-        btn = ImgButtons()
-        r = await ctx.reply(
-            f"Colored from sketch: [link]({sketch.url})",
-            embeds=[
-                discord.Embed(url="https://umbrecore.com/?r=d_e").set_image(
-                    url=attch.url
-                )
-                for attch in up.attachments
-            ],
-            view=btn,
+        body = {"input": {"workflow": input_}}
+        x = await self.runpod("https://api.runpod.ai/v2/bauvaojuoja55e", body)
+
+        # Handle multiple images concurrently
+        async def process_image(img_data):
+            file = File(BytesIO(b64decode(img_data)), filename="generated.png")
+            up = await self.bot.img_dump_chnl.send(file=file)
+            return up.attachments[0].url
+
+        # Use asyncio.gather to process images concurrently
+        images = await asyncio.gather(
+            *[process_image(img["data"]) for img in x["output"]["images"]]
         )
+
+        btn = ImgButtons()
+        # Send all image URLs in one message
+        r = await ctx.reply("\n".join(images), view=btn)
         btn.res_msg = r
         btn.del_btn_hanldr = (self.delete_generation, x["id"])
-        """ Log to channel """
+
+        u_in = {
+            "prompt": prompt,
+            "negative_prompt": negative_prompt,
+            "output_count": output_count,
+            "seed": seed,
+        }
+        await self.log(
+            ctx,
+            str(u_in)[:1500],
+            x["id"],
+            "\n".join(images),
+            "imagine",
+            "230404",
+        )
+
+    @commands.hybrid_command()
+    async def nano_banana(
+        self,
+        ctx,
+        prompt: str,
+        input1: Attachment,
+        input2: Optional[Attachment] = None,
+        input3: Optional[Attachment] = None,
+        input4: Optional[Attachment] = None,
+    ):
+        """Edit images using RunPod's nano-banana-edit endpoint. Input1 is required, inputs 2-4 are optional."""
+        asyncio.create_task(ctx.interaction.response.defer())
+
+        # Collect all provided image URLs
+        images = [input1.url]
+        for img in [input2, input3, input4]:
+            if img:
+                images.append(img.url)
+
         try:
-            u_in = {
-                "sketch": sketch.url,
-                "spiecies": spiecies.name,
-                "prompt": prompt,
-                "dark_latent": dark,
-                "negative_prompt": negative_prompt,
-                "seed": seed,
+            body = {
+                "input": {
+                    "prompt": prompt,
+                    "images": images,
+                    "enable_safety_checker": True,
+                }
             }
+            x = await self.runpod("https://api.runpod.ai/v2/nano-banana-edit", body)
+
+            # Download the result image
+            async with self.session.get(x["output"]["result"]) as resp:
+                if resp.status == 200:
+                    img_data = await resp.read()
+                else:
+                    raise Exception(f"Failed to download result image: {resp.status}")
+            up = await self.bot.img_dump_chnl.send(
+                file=File(BytesIO(img_data), filename="edited.png")
+            )
+
+            btn = ImgButtons()
+            r = await ctx.reply(up.attachments[0].url)
+            btn.res_msg = r
+            btn.del_btn_hanldr = (self.delete_generation, x["id"])
+
             await self.log(
-                ctx, u_in, x["id"], up.jump_url, "colorize pokemon", "231012"
+                ctx,
+                str({"prompt": prompt, "image_count": len(images)})[:1500],
+                x["id"],
+                up.attachments[0].url,
+                "nano edit",
+                "231007",
             )
         except Exception as e:
-            await self.bot.low_log_channel.send(f"```{e}```<{ctx.message.jump_url}>")
+            await ctx.send(f"Error: {str(e)}")
 
     async def log(self, ctx, input_, id_, up, command, revision):
         d_ = {
@@ -233,25 +179,34 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         await self.bot.low_log_channel.send(d_)
 
     async def runpod(self, url, body):
-        x = await arequests("POST", url + "/run", self.HEADERS, body)
-        if x.ok:
-            id_ = x.json()["id"]
-            print(id_)
-            while 1:
-                x = await arequests("GET", url + "/status/" + id_, self.HEADERS)
-                if x.ok:
-                    x = x.json()
-                    if x["status"] == "COMPLETED":
-                        break
-                    elif x["status"] == "FAILED":
-                        raise Exception(f"Runpod failure. Job ID: {id_}")
-                    else:
-                        await asyncio.sleep(0.1)
-                else:
-                    raise Exception(f"HTTP error: {x.status_code}. Job ID: {id_}")
-        else:
-            raise Exception(f"HTTP error: {x.status_code}")
-        return x
+        print(body)
+        async with self.session.post(
+            url + "/run", headers=self.HEADERS, json=body
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                id_ = data["id"]
+                # print(id_)
+                while True:
+                    async with self.session.get(
+                        url + "/status/" + id_, headers=self.HEADERS
+                    ) as status_response:
+                        if status_response.status == 200:
+                            status_data = await status_response.json()
+                            if status_data["status"] == "COMPLETED":
+                                return status_data
+                            elif status_data["status"] == "FAILED":
+                                raise Exception(
+                                    f"Runpod failure. Detail: {status_data}"
+                                )
+                            else:
+                                await asyncio.sleep(0.1)
+                        else:
+                            raise Exception(
+                                f"HTTP error: {status_response.status}. Job ID: {id_}"
+                            )
+            else:
+                raise Exception(f"HTTP error: {response.status}")
 
 
 class ImgButtons(discord.ui.View):
