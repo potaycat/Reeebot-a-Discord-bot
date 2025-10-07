@@ -1,0 +1,15 @@
+build:
+  image: gitlab..com:4567/infra/awscli_docker:latest
+  services:
+    - name: docker:18.03.1-ce-dind
+      alias: docker-dind
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker-dind:2375
+    IMAGE_TAG: longnhfvtap/lucario-sd:1.4
+  script:
+  - echo @9GXXcBFKz6Tc6d | docker login --username longnhfvtap --password-stdin
+  - git clone https://github.com/potaycat/Reeebot-a-Discord-bot src
+  - docker build -t $IMAGE_TAG src/modules/image_generation/runpod-api/sd-cario
+  - docker push $IMAGE_TAG
+  

@@ -1,0 +1,31 @@
+# fly.toml app configuration file generated for reeebot-230113 on 2023-10-12T11:16:38+07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "reeebot-230113"
+primary_region = "hkg"
+kill_signal = "SIGINT"
+kill_timeout = "15s"
+
+[experimental]
+
+[processes]
+  discord-bot = "python src/main.py"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["discord-bot"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20

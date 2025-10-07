@@ -9,7 +9,7 @@ from convcolors import rgb_to_lab
 # from sklearn import cluster
 
 DEFAULT_TOLERANCE = 32
-FILE_PATH = "modules/image_manip/comvis/"
+FILE_PATH = "src/modules/image_manip/comvis/"
 
 
 if __name__ != "__main__":

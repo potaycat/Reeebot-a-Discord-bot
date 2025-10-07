@@ -21,12 +21,12 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             "Authorization": f"Bearer {os.getenv('RUN_POD_API_KEY')}",
         }
         with open(
-            "./modules/image_generation/runpod-api/comfyui-noobai-wf.json",
+            "src/modules/image_generation/runpod-api/comfyui-noobai-wf.json",
             "r",
         ) as f:
             self.comfyuinoobaiwf = f.read()
-        self.bot = bot
         self.session = aiohttp.ClientSession()
+        self.bot = bot
 
     async def cog_unload(self):
         if self.session:
@@ -51,12 +51,13 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         prompt,
         negative_prompt: str = "",
         output_count: app_commands.Choice[str] = None,
-        seed: int = randint(1, 999999999999999),
+        seed: int = None,
     ):
         """
-        Uses NoobAI for image generation
+        Uses NoobAI for image generation.
         """
         asyncio.create_task(ctx.interaction.response.defer())
+        seed = seed if seed else randint(1, 999999999999999)
         output_count = output_count.value if output_count else "2"
         json_text = self.comfyuinoobaiwf
         json_text = (  # replace 1st occurrence
@@ -68,18 +69,12 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         input_ = json.loads(json_text)
         body = {"input": {"workflow": input_}}
         x = await self.runpod("https://api.runpod.ai/v2/bauvaojuoja55e", body)
-
-        # Handle multiple images concurrently
-        async def process_image(img_data):
-            file = File(BytesIO(b64decode(img_data)), filename="generated.png")
-            up = await self.bot.img_dump_chnl.send(file=file)
-            return up.attachments[0].url
-
-        # Use asyncio.gather to process images concurrently
-        images = await asyncio.gather(
-            *[process_image(img["data"]) for img in x["output"]["images"]]
-        )
-
+        file_list = [
+            File(BytesIO(b64decode(img["data"])), filename="generated.png")
+            for img in x["output"]["images"]
+        ]
+        up = await self.bot.img_dump_chnl.send(files=file_list)
+        images = [attch.url for attch in up.attachments]
         btn = ImgButtons()
         # Send all image URLs in one message
         r = await ctx.reply(" ".join(images), view=btn)
@@ -92,13 +87,14 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             "output_count": output_count,
             "seed": seed,
         }
+        x["output"] = {}
         await self.log(
             ctx,
             str(u_in)[:1500],
-            x["id"],
-            " ".join(images),
+            x,
+            up.jump_url,
             "imagine",
-            "230404",
+            "251008",
         )
 
     @commands.hybrid_command()
@@ -111,7 +107,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         input3: Optional[Attachment] = None,
         input4: Optional[Attachment] = None,
     ):
-        """Edit images using RunPod's nano-banana-edit endpoint. Input1 is required, inputs 2-4 are optional."""
+        """Edit images using nano-banana."""
         asyncio.create_task(ctx.interaction.response.defer())
 
         # Collect all provided image URLs
@@ -145,13 +141,14 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             btn.res_msg = r
             btn.del_btn_hanldr = (self.delete_generation, x["id"])
 
+            del x["output"]["result"]
             await self.log(
                 ctx,
-                str({"prompt": prompt, "image_count": len(images)})[:1500],
-                x["id"],
-                up.attachments[0].url,
-                "nano edit",
-                "231007",
+                str({"prompt": prompt, "image_count": len(images)}),
+                x,
+                up.jump_url,
+                "nano_banana",
+                "251008",
             )
         except Exception as e:
             await ctx.send(f"Error: {str(e)}")
@@ -163,10 +160,13 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             "command": command,
             "revision": revision,
             "input": input_,
-            "job_id": id_,
+            "job_detail": id_,
             "output": "<" + up + ">",
         }
-        await self.bot.low_log_channel.send(d_)
+        try:
+            await self.bot.low_log_channel.send(d_)
+        except:
+            pass
 
     async def delete_generation(self, msg, interaction, jid, reason=None):
         await msg.delete()
@@ -179,7 +179,6 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         await self.bot.low_log_channel.send(d_)
 
     async def runpod(self, url, body):
-        print(body)
         async with self.session.post(
             url + "/run", headers=self.HEADERS, json=body
         ) as response:
