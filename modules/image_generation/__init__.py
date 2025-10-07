@@ -50,14 +50,14 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
         ctx,
         prompt,
         negative_prompt: str = "",
-        output_count: app_commands.Choice[str] = "2",
+        output_count: app_commands.Choice[str] = None,
         seed: int = randint(1, 999999999999999),
     ):
         """
         Uses NoobAI for image generation
         """
         asyncio.create_task(ctx.interaction.response.defer())
-
+        output_count = output_count.value if output_count else "2"
         json_text = self.comfyuinoobaiwf
         json_text = (  # replace 1st occurrence
             json_text.replace("<INT SEED>", str(seed), 1)
@@ -82,7 +82,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
 
         btn = ImgButtons()
         # Send all image URLs in one message
-        r = await ctx.reply("\n".join(images), view=btn)
+        r = await ctx.reply(" ".join(images), view=btn)
         btn.res_msg = r
         btn.del_btn_hanldr = (self.delete_generation, x["id"])
 
@@ -96,7 +96,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             ctx,
             str(u_in)[:1500],
             x["id"],
-            "\n".join(images),
+            " ".join(images),
             "imagine",
             "230404",
         )
