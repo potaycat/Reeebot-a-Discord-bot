@@ -10,7 +10,7 @@ A Discord bot named *Reeebot*
 
 
 ### Run dev:
-`python /src/main.py`
+`python src/main.py`
 
 ### Deployment:
 https://github.com/potaycat/reeebot-deploy

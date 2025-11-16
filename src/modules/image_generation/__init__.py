@@ -39,9 +39,9 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             for x in [
                 "1",
                 "2",
+                "3",
                 "4",
-                "6",
-                "9",
+                "5",
             ]
         ]
     )
@@ -169,7 +169,7 @@ class ImageGen(commands.Cog, name="4. Image Generation"):
             pass
 
     async def delete_generation(self, msg, interaction, jid, reason=None):
-        await msg.delete()
+        await msg.edit(content=f"`Deleted by {interaction.user}`")
         d_ = {
             "actor": f"{interaction.user} ({interaction.user.id})",
             "job_id": jid,

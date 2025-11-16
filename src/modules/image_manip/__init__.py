@@ -4,7 +4,6 @@ from discord import File, Attachment, User
 from typing import Optional
 from .presets import ImageFilterer
 from .color_quantizer import ColorQuantizer
-from .presets_api import remove_bg
 
 
 class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
@@ -43,16 +42,6 @@ class QuickImageEdit(commands.Cog, name="3. Image Manipulating"):
             f"{ctx.message.author}{ctx.message.created_at.timestamp()}"
         )
         await ctx.send(file=File(x))
-
-    # @quick.command()
-    async def remove_background(
-        self, ctx, avatar: Optional[User], upload: Optional[Attachment], img_link=""
-    ):
-        """
-        Remove background
-        """
-        out_p = await remove_bg(ctx.message, avatar, upload or img_link)
-        await ctx.send(file=File(out_p))
 
     @commands.hybrid_command()
     @choices(
