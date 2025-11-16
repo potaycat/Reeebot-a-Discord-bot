@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.12-slim-bullseye
 
 RUN apt update
 RUN apt install -y ffmpeg libsm6 libxext6 git
