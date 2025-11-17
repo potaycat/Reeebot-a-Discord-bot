@@ -481,11 +481,11 @@ class PokemonBattle(commands.Cog, name="Pokemon Battle"):
         """Start a Pokemon battle against a bot"""
 
         # Check if user already has an active battle
-        if interaction.user.id in self.active_battles:
-            await interaction.response.send_message(
-                "You already have an active battle! Finish it first.", ephemeral=True
-            )
-            return
+        # if interaction.user.id in self.active_battles:
+        #     await interaction.response.send_message(
+        #         "You already have an active battle! Finish it first.", ephemeral=True
+        #     )
+        #     return
 
         asyncio.create_task(interaction.response.defer())
 
@@ -495,8 +495,8 @@ class PokemonBattle(commands.Cog, name="Pokemon Battle"):
             opponent_name = f"b{str(interaction.user.id)[-17:]}"
 
             server_config = ServerConfiguration(
-                "ws://play.pschina.one/showdown/websocket",
-                "https://play.pokemonshowdown.com/~~china/action.php",
+                "ws://reeebot-showdown.fly.dev/showdown/websocket",
+                "https://play.pokemonshowdown.com/~~reeebot---showdown-fly-dev/action.php",
             )
 
             # Get the Discord bot's event loop
